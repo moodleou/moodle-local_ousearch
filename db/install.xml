@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="blocks/ousearch/db" VERSION="20101203" COMMENT="Tables for OU search system."
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_ousearch_words" COMMENT="Contains one entry for each known word." NEXT="local_ousearch_documents">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="9" NOTNULL="true" UNSIGNED="true" SEQUENCE="true" NEXT="word"/>
+        <FIELD NAME="word" TYPE="char" LENGTH="32" NOTNULL="true" SEQUENCE="false" COMMENT="Word (upper-case)" PREVIOUS="id"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" COMMENT="Unfortunately this key is required in MySQL for the sequence, bit of a waste of an index really..."/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="word" UNIQUE="true" FIELDS="word"/>
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_ousearch_documents" COMMENT="Contains one entry for each known document (potential search result)." PREVIOUS="local_ousearch_words" NEXT="local_ousearch_occurrences">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="9" NOTNULL="true" UNSIGNED="false" SEQUENCE="true" NEXT="plugin"/>
+        <FIELD NAME="plugin" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Module or plug-in name e.g. mod/ouwiki, format/studycal" PREVIOUS="id" NEXT="courseid"/>
+
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="Course ID for documents within a course" PREVIOUS="plugin" NEXT="coursemoduleid"/>
+        <FIELD NAME="coursemoduleid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="Course-module ID for documents within a module" PREVIOUS="courseid" NEXT="groupid"/>
+        <FIELD NAME="groupid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="Group ID for documents within a group" PREVIOUS="coursemoduleid" NEXT="userid"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="Group ID for documents within a group" PREVIOUS="groupid" NEXT="stringref"/>
+        <FIELD NAME="stringref" TYPE="char" LENGTH="255" NOTNULL="false" SEQUENCE="false" COMMENT="Arbitrary string reference to identify document (null if not needed)" PREVIOUS="userid" NEXT="intref1"/>
+        <FIELD NAME="intref1" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="Arbitrary int reference to identify document (null if not needed)" PREVIOUS="stringref" NEXT="intref2"/>
+        <FIELD NAME="intref2" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="Arbitrary int reference to identify document (null if not needed)" PREVIOUS="intref1" NEXT="timemodified"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" COMMENT="Time (seconds since epoch) at which document was modified" PREVIOUS="intref2" NEXT="timeexpires"/>
+        <FIELD NAME="timeexpires" TYPE="int" LENGTH="10" NOTNULL="false" UNSIGNED="true" SEQUENCE="false" COMMENT="Time (seconds since epoch) at which document should be checked for changes, or null for no checks" PREVIOUS="timemodified"/>
+
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="groupid"/>
+        <KEY NAME="groupid" TYPE="foreign" FIELDS="groupid" REFTABLE="group" REFFIELDS="id" PREVIOUS="primary" NEXT="userid"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" PREVIOUS="groupid"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="courseid_coursemoduleid" UNIQUE="false" FIELDS="courseid, coursemoduleid" COMMENT="To allow search via course or course and module. (OK to have shared index because it isn't possible to search coursemodule without knowing course.)" NEXT="plugin"/>
+        <INDEX NAME="plugin" UNIQUE="false" FIELDS="plugin" COMMENT="So we can restrict search by plugin type." PREVIOUS="courseid_coursemoduleid"/>
+
+      </INDEXES>
+    </TABLE>
+    <TABLE NAME="local_ousearch_occurrences" COMMENT="One entry for each unique word in each document. This is the really huge table." PREVIOUS="local_ousearch_documents">
+      <FIELDS>
+        <FIELD NAME="wordid" TYPE="int" LENGTH="9" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" NEXT="documentid"/>
+        <FIELD NAME="documentid" TYPE="int" LENGTH="9" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="wordid" NEXT="score"/>
+        <FIELD NAME="score" TYPE="int" LENGTH="9" NOTNULL="true" UNSIGNED="true" SEQUENCE="false" PREVIOUS="documentid"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="wordid, documentid" NEXT="documentid"/>
+        <KEY NAME="documentid" TYPE="foreign" FIELDS="documentid" REFTABLE="ousearch_documents" REFFIELDS="id" PREVIOUS="primary"/>
+      </KEYS>
+    </TABLE>
+  </TABLES>
+</XMLDB>

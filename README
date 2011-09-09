@@ -1,0 +1,46 @@
+OU search
+=========
+
+Copyright 2011 The Open University
+
+
+This is a cross-database indexed text-search facility.
+
+It does not do anything on its own, but if you install it alongside
+ForumNG, OU blog, or OU wiki then it will provide full text search for
+those modules.
+
+Support:
+
+We cannot offer direct support. Please do not contact me directly. If you
+need assistance, try the relevant forum on moodle.org.
+
+Bug reports:
+
+Please report bugs to the Moodle tracker using the 'contributed code' project
+and 'Block: OU search' component. Under Version, please select your Moodle
+version e.g. 2.1, 2.2.
+
+Status:
+
+Beta quality code. We intend to switch this project to include live quality
+code at some point after our mid-October update.
+
+Please note that this code is tested on OU systems but we rely on the
+community for testing on other systems.
+
+Requires:
+
+Moodle 2.1+
+Postgres / MySQL
+
+Install:
+
+Place the contents of this source tree into your Moodle installation so that
+within your Moodle root, this file is local/ousearch/README. Then visit the
+Moodle notifications page to install.
+
+Documentation:
+
+See 'doc' folder. This documentation may be out of date. It is aimed mainly
+at module developers who might wish to use ousearch in their own modules.

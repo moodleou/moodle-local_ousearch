@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Updating ousearch support to Moodle 2</title>
+</head>
+<body>
+<h1>Updating ousearch support to Moodle 2</h1>
+<p>
+The ousearch system is fundamentally unchanged in Moodle 2, but there
+are some syntactic differences with how you use it in a module.
+</p>
+
+<p>
+This document explains the changes that are relevant if you need to
+update a module that uses ousearch from 1.9 to 2.
+</p>
+
+<h2>Block to local plugin</h2>
+
+<p>
+ousearch is now a local plugin. Therefore, <tt>searchlib.php</tt> now needs to be
+loaded from <tt>$CFG-&gt;dirroot/local/ousearch/searchlib.php</tt> instead of
+<tt>blocks/ousearch/searchlib.php</tt>.
+</p>
+
+<p>
+The actual block facilities that used to be available in ousearch (ie so you
+can add a block to a course and use it to search things) have been separated
+from the core search library; we will add those features back in a block
+also called ousearch.
+</p>
+
+<h2>Class names</h2>
+
+<p>
+Both class names have changed to put <tt>local_</tt> in front, making them compliant
+with Moodle 2 coding guidelines (i.e. they begin with <tt>local_ousearch</tt>
+instead of just <tt>ousearch_</tt>).
+</p>
+
+<h2>Static functions</h2>
+
+<p>
+There were previously some global functions with names beginning <tt>ousearch_</tt>.
+These are now static functions inside one of the classes, so for example,
+<tt>ousearch_format_results</tt> is now <tt>local_ousearch_search::format_results</tt>.
+</p>
+
+<h2>Slight function change</h2>
+
+<p>
+I changed the definition of <tt>ousearch_print_results</tt> so that it is now called
+<tt>display_results</tt> and returns a string instead of directly printing it.
+</p>
+
+<p>
+It would probably be better to make this into a renderer but it isn't really
+structured that way and I didn't have time to make the change at this point.
+</p>
+
+</body>
+</html>
