@@ -999,7 +999,7 @@ class local_ousearch_search {
      *   courseshortname, coursefullname, and groupname
      */
     private function internal_query($start,$limit) {
-        global $DB;
+        global $DB, $CFG;
         $from = '';
         $fromarray = array();
         $where = '';
@@ -1026,6 +1026,16 @@ INNER JOIN {local_ousearch_occurrences} $alias
                 }
                 $join++;
             }
+        }
+        // Because it kills the server to search for a large number of terms
+        // when the database is full, we need to limit it.
+        $maxterms = $CFG->local_ousearch_maxterms;
+        if ($join > $maxterms) {
+            $referer = $_SERVER['HTTP_REFERER'];
+            if (!$referer) {
+                $referer = ''; // Use default
+            }
+            print_error('toomanyterms', 'local_ousearch', $referer, $maxterms);
         }
         foreach ($this->negativeterms as $term) {
             if (count($term->ids)==1) {

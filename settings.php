@@ -15,4 +15,8 @@ if ($hassiteconfig) { // needs condition or error on login page
     $settings->add(new admin_setting_configtext(
             'local_ousearch/remote', get_string('remote', 'local_ousearch'),
             get_string('configremote', 'local_ousearch'), '', PARAM_RAW));
+
+    $settings->add(new admin_setting_configtext(
+            'local_ousearch_maxterms', get_string('maxterms', 'local_ousearch'),
+            get_string('maxterms_desc', 'local_ousearch'), '20', PARAM_INT));
 }

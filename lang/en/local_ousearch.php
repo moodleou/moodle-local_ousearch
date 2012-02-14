@@ -47,3 +47,6 @@ $string['remotewrong'] = 'Remote search access is not configured (or not correct
 $string['remotenoaccess'] = 'This IP address does not have access to remote search';
 $string['pluginname'] = $string['ousearch'];
 $string['restofwebsite'] = 'Search the rest of this website';
+$string['toomanyterms'] = '<strong>You have entered too many search terms (words).</strong> To ensure that search results can be displayed promptly, the system is limited to a maximum of {$a} search terms. Please press the Back button and modify your search.';
+$string['maxterms'] = 'Maximum number of terms';
+$string['maxterms_desc'] = 'If the user tries to search for more terms than this limit, they will get an error message. (For performance reasons.)';
