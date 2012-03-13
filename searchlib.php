@@ -1716,7 +1716,7 @@ WHERE
         $results = array();
         foreach ($possible as $record) {
             if ($record->cmgroupmode == VISIBLEGROUPS ||
-                has_capability('moodle/site:accessallgroups', $record)) {
+                has_capability('moodle/site:accessallgroups', context_course::instance($record->cmcourse))) {
                 $results[] = (object)array(
                     'id' => $record->cmid, 'course' => $record->cmcourse);
             }
