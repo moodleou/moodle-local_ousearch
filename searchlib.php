@@ -1511,7 +1511,7 @@ ORDER BY totalscore DESC, o0.documentid";
                         '&dbstart=' . $matches[2] .
                         ($matches[1] ? '&previous=' . $matches[1] : '');
             }
-            $oldrange = ($from - self::RESULTS_PER_PAGE + 1) . '&#8211;' . $from;
+            $oldrange = ($from - self::RESULTS_PER_PAGE + 1) . ' - ' . $from;
 
             if (count($results->results) == self::RESULTS_PER_PAGE) {
                 if ($from < self::RESULTS_PER_PAGE) {
@@ -1574,7 +1574,7 @@ ORDER BY totalscore DESC, o0.documentid";
             if ($prevlink) {
                 $out .= '<p>' . link_arrow_left(
                     get_string('previousresults', 'local_ousearch', $prevrange),
-                    $prevlink, false, 'left') . '</p>';
+                    s($prevlink)) . '</p>';
             }
 
             if (count($results->results) == 0) {
@@ -1603,7 +1603,7 @@ ORDER BY totalscore DESC, o0.documentid";
             if ($nextlink) {
                 $out .= '<p>' . link_arrow_right(
                         get_string('findmoreresults', 'local_ousearch'),
-                        $nextlink, false, 'right') . '</p>';
+                        s($nextlink)) . '</p>';
             }
         }
 
@@ -1716,7 +1716,7 @@ WHERE
         $results = array();
         foreach ($possible as $record) {
             if ($record->cmgroupmode == VISIBLEGROUPS ||
-                has_capability('moodle/site:accessallgroups', context_course::instance($record->cmcourse))) {
+                has_capability('moodle/site:accessallgroups', $record)) {
                 $results[] = (object)array(
                     'id' => $record->cmid, 'course' => $record->cmcourse);
             }
