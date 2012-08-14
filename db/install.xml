@@ -34,7 +34,7 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id" NEXT="groupid"/>
-        <KEY NAME="groupid" TYPE="foreign" FIELDS="groupid" REFTABLE="group" REFFIELDS="id" PREVIOUS="primary" NEXT="userid"/>
+        <KEY NAME="groupid" TYPE="foreign" FIELDS="groupid" REFTABLE="groups" REFFIELDS="id" PREVIOUS="primary" NEXT="userid"/>
         <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id" PREVIOUS="groupid"/>
       </KEYS>
       <INDEXES>
@@ -51,7 +51,7 @@
       </FIELDS>
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="wordid, documentid" NEXT="documentid"/>
-        <KEY NAME="documentid" TYPE="foreign" FIELDS="documentid" REFTABLE="ousearch_documents" REFFIELDS="id" PREVIOUS="primary"/>
+        <KEY NAME="documentid" TYPE="foreign" FIELDS="documentid" REFTABLE="local_ousearch_documents" REFFIELDS="id" PREVIOUS="primary"/>
       </KEYS>
     </TABLE>
   </TABLES>
