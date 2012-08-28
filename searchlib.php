@@ -261,20 +261,19 @@ class local_ousearch_document {
             return true;
         }
 
-        // Cut down all words to max db length
-        $tl = textlib_get_instance();
+        // Cut down all words to max db length.
         foreach ($wordset as $word=>$count) {
             // Check byte length just to save time
             if (strlen($word) > self::MAX_WORD_LENGTH) {
-                // Cut length of word
-                $short = $tl->substr($word, 0, self::MAX_WORD_LENGTH);
+                // Cut length of word.
+                $short = textlib::substr($word, 0, self::MAX_WORD_LENGTH);
 
-                // Combine with existing word if there are two with same prefix
+                // Combine with existing word if there are two with same prefix.
                 if (array_key_exists($short, $wordset)) {
                     $count += $wordset[$short];
                 }
 
-                // Save as short word and remove long one
+                // Save as short word and remove long one.
                 $wordset[$short] = $count;
                 unset($wordset[$word]);
             }
@@ -408,10 +407,9 @@ class local_ousearch_document {
         // Words include all letters, numbers, and apostrophes. Though this is
         // expressed with Unicode it is likely to work properly only for English and
         // some other European languages.
-        $tl = textlib_get_instance();
         $text = preg_replace(
                 $query ? '/[^\pL\pN\x27+"-]/u' : '/[^\pL\pN\x27]/u',
-                '_', $tl->strtolower($text));
+                '_', textlib::strtolower($text));
 
         if (!$positions) {
             $text = preg_replace('/\x27+(_|$)/u','_', $text);
@@ -432,20 +430,20 @@ class local_ousearch_document {
             $words = array();
             $positions = array();
             $pos = 0;
-            while($pos < $tl->strlen($text)) {
-                if ($tl->substr($text,$pos,1) === '_') {
+            while($pos < textlib::strlen($text)) {
+                if (textlib::substr($text,$pos,1) === '_') {
                     $pos++;
                     continue;
                 }
-                $nextunderline = $tl->strpos($text, '_', $pos+1);
+                $nextunderline = textlib::strpos($text, '_', $pos+1);
                 if ($nextunderline === false) {
-                    $nextunderline = $tl->strlen($text);
+                    $nextunderline = textlib::strlen($text);
                 }
-                $words[] = $tl->substr($text, $pos, $nextunderline - $pos);
+                $words[] = textlib::substr($text, $pos, $nextunderline - $pos);
                 $positions[] = $pos;
                 $pos = $nextunderline + 1;
             }
-            $positions[] = $tl->strlen($text);
+            $positions[] = textlib::strlen($text);
             return array($words, $positions);
         }
     }
@@ -457,8 +455,7 @@ class local_ousearch_document {
      */
     private function internal_replace_callback($matches) {
         $underlines = '';
-        $tl = textlib_get_instance();
-        for($i=0; $i<$tl->strlen($matches[0]); $i++) {
+        for($i=0; $i<textlib::strlen($matches[0]); $i++) {
             $underlines .= '_';
         }
         return $underlines;
@@ -585,18 +582,17 @@ class local_ousearch_search {
         $currentquote = array();
         $sign = false;
         $inquote = false;
-        $tl = textlib_get_instance();
         foreach ($words as $word) {
-            // Clean word to get rid of +, ", and - except if it's in the middle
+            // Clean word to get rid of +, ", and - except if it's in the middle.
             $cleaned = preg_replace('/(^-)|(-$)/', '',
                     preg_replace('/[+"]/','',$word));
 
-            // Shorten word if necessary to db length
-            $cleaned = $tl->substr($cleaned, 0,
+            // Shorten word if necessary to db length.
+            $cleaned = textlib::substr($cleaned, 0,
                     local_ousearch_document::MAX_WORD_LENGTH);
 
             if ($inquote) {
-                // Handle hyphenated words
+                // Handle hyphenated words.
                 if (strpos($cleaned,'-') !== false) {
                     foreach (explode('-', $cleaned) as $subword) {
                         $currentquote[] = $subword;
@@ -1098,7 +1094,6 @@ ORDER BY totalscore DESC, o0.documentid";
         $count = 0;
         $return = new StdClass;
         $return->dbnext = 0;
-        $tl = textlib_get_instance();
         foreach ($results as $result) {
             $return->dbnext++;
             if (substr($result->plugin,0,4) === 'mod_') {
@@ -1323,8 +1318,8 @@ ORDER BY totalscore DESC, o0.documentid";
                 $end = count($contentwords);
             }
 
-            // $contentpositions is in characters
-            $result->summary = $tl->substr($textcontent,
+            // $contentpositions is in characters.
+            $result->summary = textlib::substr($textcontent,
                     $contentpositions[$start],
                     $contentpositions[$end] - $contentpositions[$start]) .
                     ($end < count($contentwords) ? '...' : '');
@@ -1373,17 +1368,16 @@ ORDER BY totalscore DESC, o0.documentid";
         if ($end == -1) {
             $end = count($contentwords);
         }
-        $tl = textlib_get_instance();
 
         for($pos=$start; $pos<$end; $pos++) {
             $word = $contentwords[$pos];
             if (array_key_exists($word, $positivewords)) {
                 $wordpos = $contentpositions[$pos];
-                $summary = $tl->substr($summary, 0, $wordpos + $offset) .
-                        '<highlight>' . $tl->substr(
-                            $summary, $wordpos + $offset, $tl->strlen($word)) .
-                        '</highlight>' . $tl->substr(
-                            $summary, $wordpos + $offset + $tl->strlen($word));
+                $summary = textlib::substr($summary, 0, $wordpos + $offset) .
+                        '<highlight>' . textlib::substr(
+                            $summary, $wordpos + $offset, textlib::strlen($word)) .
+                        '</highlight>' . textlib::substr(
+                            $summary, $wordpos + $offset + textlib::strlen($word));
                 $offset += 23; // Length of highlight tags
             }
         }
