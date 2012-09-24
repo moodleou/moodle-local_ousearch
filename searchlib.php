@@ -453,7 +453,7 @@ class local_ousearch_document {
      * of underline characters.
      * @param $matches Regex matches
      */
-    private function internal_replace_callback($matches) {
+    private static function internal_replace_callback($matches) {
         $underlines = '';
         for($i=0; $i<textlib::strlen($matches[0]); $i++) {
             $underlines .= '_';
