@@ -604,25 +604,7 @@ class local_ousearch_search {
                 } else {
                     $currentquote[] = $cleaned;
                 }
-                if (substr($word, strlen($word)-1, 1) == '"') {
-                    $term = new StdClass;
-                    $term->words = $currentquote;
-                    switch($sign) {
-                        case '+':
-                            $term->required = true;
-                            $this->terms[] = $term;
-                            break;
-                        case '':
-                            $term->required = false;
-                            $this->terms[] = $term;
-                            break;
-                        case '-':
-                            $term->required = true;
-                            $this->negativeterms[] = $term;
-                            break;
-                    }
-                    $inquote = false;
-                }
+                self::internal_end_quote($currentquote, $word, $sign, $inquote);
             } else {
                 // The below are all single-byte characters so we don't need to
                 // use textlib here.
@@ -634,34 +616,66 @@ class local_ousearch_search {
                     $currentquote = self::internal_hyphenated_array($cleaned);
                     $inquote = true;
                     $sign = '';
+                    self::internal_end_quote($currentquote, $word, $sign, $inquote);
                 } else if ($firstchar=='+' && $secondchar=='"') {
                     // +"a phrase"
                     $currentquote = self::internal_hyphenated_array($cleaned);
                     $inquote = true;
                     $sign = '+';
+                    self::internal_end_quote($currentquote, $word, $sign, $inquote);
                 } else if ($firstchar=='-' && $secondchar=='"') {
                     // -"a phrase"
                     $currentquote = self::internal_hyphenated_array($cleaned);
                     $inquote = true;
                     $sign = '-';
-                } else if ($firstchar=='+') {
+                    self::internal_end_quote($currentquote, $word, $sign, $inquote);
+                } else if ($firstchar=='+' && $cleaned !== '') {
                     // +cat
                     $term = new StdClass;
                     $term->words = self::internal_hyphenated_array($cleaned);
                     $term->required = true;
                     $this->terms[] = $term;
-                } else if ($firstchar=='-') {
+                } else if ($firstchar=='-' && $cleaned !== '') {
                     // -cat
                     $term = new StdClass;
                     $term->words = self::internal_hyphenated_array($cleaned);
                     $this->negativeterms[] = $term;
-                } else {
+                } else if ($cleaned !== '') {
                     $term = new StdClass;
                     $term->words = self::internal_hyphenated_array($cleaned);
                     $term->required = false;
                     $this->terms[] = $term;
                 }
             }
+        }
+    }
+
+    /**
+     * Called while parsing query, when a quote run may have finished.
+     * @param array $currentquote Words in quote so far
+     * @param string $word Current word (looking for quote at end of this)
+     * @param string $sign Quote sign
+     * @param bool $inquote True if in quote (OUT: Set to false if quote ended)
+     */
+    private function internal_end_quote($currentquote, $word, $sign, &$inquote) {
+        if (substr($word, strlen($word)-1, 1) == '"') {
+            $term = new StdClass;
+            $term->words = $currentquote;
+            switch($sign) {
+                case '+':
+                    $term->required = true;
+                    $this->terms[] = $term;
+                    break;
+                case '':
+                    $term->required = false;
+                    $this->terms[] = $term;
+                    break;
+                case '-':
+                    $term->required = true;
+                    $this->negativeterms[] = $term;
+                    break;
+            }
+            $inquote = false;
         }
     }
 
