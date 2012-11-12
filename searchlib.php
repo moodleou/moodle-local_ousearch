@@ -1133,7 +1133,8 @@ ORDER BY totalscore DESC, o0.documentid";
                     debugging('Module ' . $result->plugin .
                             ' can\'t find search document, removing from results');
                 }
-                local_ousearch_document::wipe_document($result->id);
+                $searchdoc = new local_ousearch_document();
+                $searchdoc->wipe_document($result->id);
                 continue;
             }
 
