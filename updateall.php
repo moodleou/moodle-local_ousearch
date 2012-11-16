@@ -6,8 +6,9 @@ require_once('../../config.php');
 require_once('searchlib.php');
 require_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM));
 
-$courseid = required_param('course',PARAM_INT);
+$courseid = optional_param('course', 0, PARAM_INT);
 $module = required_param('module',PARAM_ALPHA);
+$confirm = optional_param('confirm', 0, PARAM_INT);
 
 require_once($CFG->dirroot.'/mod/'.$module.'/lib.php');
 $function = $module . '_ousearch_update_all';
@@ -16,6 +17,14 @@ print $OUTPUT->header();
 print $OUTPUT->heading(
     get_string('reindex', 'local_ousearch',
         (object)array('module'=>$module, 'courseid'=>$courseid)));
+
+if ($courseid == 0 && $confirm == 0) {
+    $params = array('courseid' => 0, 'confirm' => 1, 'module' => $module);
+    $go = new moodle_url('/local/ousearch/updateall.php', $params);
+    print $OUTPUT->confirm('Confirm update to all courses', $go, $CFG->wwwroot);
+    print $OUTPUT->footer();
+    exit;
+}
 
 print "<ul>";
 
