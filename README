@@ -1,7 +1,7 @@
 OU search
 =========
 
-Copyright 2011 The Open University
+Copyright 2012 The Open University
 
 
 This is a cross-database indexed text-search facility.
@@ -17,21 +17,26 @@ need assistance, try the relevant forum on moodle.org.
 
 Bug reports:
 
-Please report bugs to the Moodle tracker using the 'contributed code' project
-and 'Block: OU search' component. Under Version, please select your Moodle
-version e.g. 2.1, 2.2.
+Please report bugs using the 'Issues' tab on GitHub above.
+
+Before reporting a bug, please ensure you are running the latest version of
+the plugin that is available from:
+
+https://github.com/moodleou/moodle-local_ousearch
+
+In the bug report, please include your Moodle version (e.g. 2.3.2) and your
+ousearch version (which you can find in the file local/ousearch/version.php). 
 
 Status:
 
-Beta quality code. We intend to switch this project to include live quality
-code at some point after our mid-October update.
+Tested, live code based on our Moodle 2.3 release.
 
 Please note that this code is tested on OU systems but we rely on the
 community for testing on other systems.
 
 Requires:
 
-Moodle 2.1+
+Moodle 2.3+
 Postgres / MySQL
 
 Install:
