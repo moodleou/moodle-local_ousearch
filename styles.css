@@ -28,10 +28,3 @@
     font-size: 0.85em;
     color: #888;
 }
-#ousearch_searchbutton {
-    background-image: url([[pix:moodle|i/search]]); /*override in theme*/
-    background-repeat: no-repeat;
-    width: 20px;
-    height: 20px;
-    padding: 0;
-}

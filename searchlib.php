@@ -1567,7 +1567,7 @@ ORDER BY totalscore DESC, o0.documentid";
     public static function format_results($results, $title, $number=1,
         $prevlink=null, $prevrange=null, $nextlink=null, $searchtime=null) {
         $out = '<div class="ousearch_results">';
-        if ($title === '') {
+        if ($title !== '') {
             $out .= '<h2>' . $title . '</h2>';
         }
 
