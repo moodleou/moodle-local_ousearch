@@ -24,19 +24,19 @@ the plugin that is available from:
 
 https://github.com/moodleou/moodle-local_ousearch
 
-In the bug report, please include your Moodle version (e.g. 2.4.3) and your
+In the bug report, please include your Moodle version (e.g. 2.5.3) and your
 ousearch version (which you can find in the file local/ousearch/version.php). 
 
 Status:
 
-Tested, live code based on our Moodle 2.4 release.
+Tested, live code based on our Moodle 2.5 release.
 
 Please note that this code is tested on OU systems but we rely on the
 community for testing on other systems.
 
 Requires:
 
-Moodle 2.4+
+Moodle 2.5+
 Postgres / MySQL
 
 Install:
