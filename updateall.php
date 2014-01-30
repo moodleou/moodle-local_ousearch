@@ -4,7 +4,7 @@
 
 require_once('../../config.php');
 require_once('searchlib.php');
-require_capability('moodle/site:config', get_context_instance(CONTEXT_SYSTEM));
+require_capability('moodle/site:config', context_system::instance());
 
 $courseid = optional_param('course', 0, PARAM_INT);
 $module = required_param('module',PARAM_ALPHA);
