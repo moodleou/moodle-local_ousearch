@@ -1,7 +1,7 @@
 OU search
 =========
 
-Copyright 2012 The Open University
+Copyright 2014 The Open University
 
 
 This is a cross-database indexed text-search facility.
@@ -34,7 +34,7 @@ Please see the branches (MOODLE_xx_STABLE) for tested code.
 
 Requires:
 
-Moodle 2.3+
+Moodle 2.7+
 Postgres / MySQL
 
 Install:
@@ -42,6 +42,15 @@ Install:
 Place the contents of this source tree into your Moodle installation so that
 within your Moodle root, this file is local/ousearch/README. Then visit the
 Moodle notifications page to install.
+
+If you have existing searchable content (i.e. existing installations of
+ForumNG, OU wiki, or OU blog) then in order to make search work, after
+completing installation you must manually visit this script within your
+Moodle:
+
+http://your.server/.../local/ousearch/postinstall.php
+
+This script will build the search index for all existing content.
 
 Documentation:
 
