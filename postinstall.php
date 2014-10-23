@@ -15,12 +15,34 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version.
+ * On install, builds the search data for all existing content.
  *
  * @package local_ousearch
  * @copyright 2014 The Open University
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-$plugin->version = 2014102300;
-$plugin->requires = 2011120100;
-$plugin->displayversion = 'Unstable development version (use at own risk)';
+
+require(__DIR__ . '/../../config.php');
+
+// Check administrator or similar.
+require_login();
+require_capability('moodle/site:config', context_system::instance());
+
+$url = new moodle_url('/local/ousearch/postinstall.php');
+$PAGE->set_url($url);
+$PAGE->set_context(context_system::instance());
+
+echo $OUTPUT->header();
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && confirm_sesskey()) {
+    require_once(__DIR__ . '/searchlib.php');
+    $plugins = get_plugin_list_with_function('mod', 'ousearch_update_all');
+    foreach ($plugins as $plugin => $fn) {
+        $fn(true);
+    }
+} else {
+    echo $OUTPUT->box(get_string('postinstall', 'local_ousearch'));
+    echo $OUTPUT->single_button($url, get_string('continue'));
+}
+
+echo $OUTPUT->footer();
