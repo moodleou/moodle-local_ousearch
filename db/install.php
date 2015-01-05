@@ -15,12 +15,19 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version.
+ * Database install script.
  *
  * @package local_ousearch
- * @copyright 2014 The Open University
+ * @copyright 2015 The Open University
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$plugin->version = 2015010500;
-$plugin->requires = 2011120100;
+/**
+ * Modifies the table collation for MySQL users.
+ */
+function xmldb_local_ousearch_install() {
+    global $DB;
+    if ($DB->get_dbfamily() == 'mysql') {
+        $DB->execute("ALTER TABLE {local_ousearch_words} CONVERT TO CHARACTER SET utf8 COLLATE utf8_bin");
+    }
+}
