@@ -266,7 +266,7 @@ class local_ousearch_document {
             // Check byte length just to save time
             if (strlen($word) > self::MAX_WORD_LENGTH) {
                 // Cut length of word.
-                $short = textlib::substr($word, 0, self::MAX_WORD_LENGTH);
+                $short = core_text::substr($word, 0, self::MAX_WORD_LENGTH);
 
                 // Combine with existing word if there are two with same prefix.
                 if (array_key_exists($short, $wordset)) {
@@ -409,7 +409,7 @@ class local_ousearch_document {
         // some other European languages.
         $text = preg_replace(
                 $query ? '/[^\pL\pN\x27+"-]/u' : '/[^\pL\pN\x27]/u',
-                '_', textlib::strtolower($text));
+                '_', core_text::strtolower($text));
 
         if (!$positions) {
             $text = preg_replace('/\x27+(_|$)/u','_', $text);
@@ -430,20 +430,20 @@ class local_ousearch_document {
             $words = array();
             $positions = array();
             $pos = 0;
-            while($pos < textlib::strlen($text)) {
-                if (textlib::substr($text,$pos,1) === '_') {
+            while($pos < core_text::strlen($text)) {
+                if (core_text::substr($text,$pos,1) === '_') {
                     $pos++;
                     continue;
                 }
-                $nextunderline = textlib::strpos($text, '_', $pos+1);
+                $nextunderline = core_text::strpos($text, '_', $pos+1);
                 if ($nextunderline === false) {
-                    $nextunderline = textlib::strlen($text);
+                    $nextunderline = core_text::strlen($text);
                 }
-                $words[] = textlib::substr($text, $pos, $nextunderline - $pos);
+                $words[] = core_text::substr($text, $pos, $nextunderline - $pos);
                 $positions[] = $pos;
                 $pos = $nextunderline + 1;
             }
-            $positions[] = textlib::strlen($text);
+            $positions[] = core_text::strlen($text);
             return array($words, $positions);
         }
     }
@@ -455,7 +455,7 @@ class local_ousearch_document {
      */
     private static function internal_replace_callback($matches) {
         $underlines = '';
-        for($i=0; $i<textlib::strlen($matches[0]); $i++) {
+        for($i=0; $i<core_text::strlen($matches[0]); $i++) {
             $underlines .= '_';
         }
         return $underlines;
@@ -588,7 +588,7 @@ class local_ousearch_search {
                     preg_replace('/[+"]/','',$word));
 
             // Shorten word if necessary to db length.
-            $cleaned = textlib::substr($cleaned, 0,
+            $cleaned = core_text::substr($cleaned, 0,
                     local_ousearch_document::MAX_WORD_LENGTH);
 
             if ($inquote) {
@@ -1320,7 +1320,7 @@ ORDER BY totalscore DESC, o0.documentid";
             }
 
             // $contentpositions is in characters.
-            $result->summary = textlib::substr($textcontent,
+            $result->summary = core_text::substr($textcontent,
                     $contentpositions[$start],
                     $contentpositions[$end] - $contentpositions[$start]) .
                     ($end < count($contentwords) ? '...' : '');
@@ -1374,11 +1374,11 @@ ORDER BY totalscore DESC, o0.documentid";
             $word = $contentwords[$pos];
             if (array_key_exists($word, $positivewords)) {
                 $wordpos = $contentpositions[$pos];
-                $summary = textlib::substr($summary, 0, $wordpos + $offset) .
-                        '<highlight>' . textlib::substr(
-                            $summary, $wordpos + $offset, textlib::strlen($word)) .
-                        '</highlight>' . textlib::substr(
-                            $summary, $wordpos + $offset + textlib::strlen($word));
+                $summary = core_text::substr($summary, 0, $wordpos + $offset) .
+                        '<highlight>' . core_text::substr(
+                            $summary, $wordpos + $offset, core_text::strlen($word)) .
+                        '</highlight>' . core_text::substr(
+                            $summary, $wordpos + $offset + core_text::strlen($word));
                 $offset += 23; // Length of highlight tags
             }
         }
