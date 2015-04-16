@@ -51,3 +51,17 @@ $string['toomanyterms'] = '<strong>You have entered too many search terms (words
 $string['maxterms'] = 'Maximum number of terms';
 $string['maxterms_desc'] = 'If the user tries to search for more terms than this limit, they will get an error message. (For performance reasons.)';
 $string['postinstall'] = 'This page generates search indexes for all existing content. It can take a very long time (hours or days) if you have a large amount of searchable content to index.';
+
+$string['error_futureyear'] = 'Error: This website has a start date beyond that supported by the OU search system. Search data manipulation failed.';
+$string['warning_lastyear'] = 'Warning: This website has a start date in the last year supported by the OU search system. Administrators should increase the number of available years.';
+$string['task_split_tables'] = 'OU search: Split data into per-year tables';
+$string['task_change_dates'] = 'OU search: Handle websites that have changed their start date';
+$string['yearsenabled'] = 'Enable per-year tables';
+$string['yearsenabled_desc'] = 'If enabled, search data will be split into different tables depending on the start date of each website (so websites starting in 2014 will be in a 2014 table, and so on). Turning this option on will start a transfer process to move existing data, which may take some time. **Once turned on, this option cannot be turned off.**';
+$string['yearsenabled_on'] = 'Per-year tables are fully enabled and in use.';
+$string['yearsenabled_transferring'] = 'Per-year tables are partially enabled ({$a}% of websites transferred).';
+
+$string['splittimelimit'] = 'Year table split time';
+$string['splittimelimit_desc'] = 'Max time to spend per hourly cron task in transferring the old search index into per-year tables';
+$string['datetimelimit'] = 'Year table change date time';
+$string['datetimelimit_desc'] = 'Max time to spend per hourly cron in transferring search index data if a website changes year';

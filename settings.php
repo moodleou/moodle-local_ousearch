@@ -18,13 +18,13 @@
  * Admin settings.
  *
  * @package local_ousearch
- * @copyright 2013 The Open University
+ * @copyright 2015 The Open University
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die;
 
-if ($hassiteconfig) { // needs condition or error on login page
+if ($hassiteconfig) {
     $settings = new admin_settingpage(
             'local_ousearch', get_string('ousearch', 'local_ousearch'));
     $ADMIN->add('localplugins', $settings);
@@ -36,4 +36,22 @@ if ($hassiteconfig) { // needs condition or error on login page
     $settings->add(new admin_setting_configtext(
             'local_ousearch_maxterms', get_string('maxterms', 'local_ousearch'),
             get_string('maxterms_desc', 'local_ousearch'), '20', PARAM_INT));
+
+    $settings->add(new \local_ousearch\admin_setting_transferring());
+
+    // Time limits for cron operations.
+    $options = array(
+        60 => get_string('numseconds', '', 60),
+        180 => get_string('numminutes', '', 3),
+        300 => get_string('numminutes', '', 5),
+        600 => get_string('numminutes', '', 10),
+        900 => get_string('numminutes', '', 15),
+        1200 => get_string('numminutes', '', 20)
+    );
+    $settings->add(new admin_setting_configselect('local_ousearch/splittimelimit',
+            get_string('splittimelimit', 'local_ousearch'),
+            get_string('splittimelimit_desc', 'local_ousearch'), 600, $options));
+    $settings->add(new admin_setting_configselect('local_ousearch/datetimelimit',
+            get_string('datetimelimit', 'local_ousearch'),
+            get_string('datetimelimit_desc', 'local_ousearch'), 600, $options));
 }

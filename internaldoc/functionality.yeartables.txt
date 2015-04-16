@@ -1,0 +1,138 @@
+OU search: per-year tables
+==========================
+
+This functionality document describes the new 'per-year tables' feature, not
+the entire plugin.
+
+Database structure overview
+---------------------------
+
+OU search uses three tables: documents, words, and occurrences.
+* The words table is an index between all words ever encountered in the system
+  and 32-bit integers.
+* The documents table is a list of everything searchable (for example a forum
+  post counts as a document; a version of a wiki page counts as a document;
+  one page of a Structured Content document counts as a document).
+* The occurrences table is a relation between documents and words; it lists
+  all the words that occur in each document (and how many times).
+
+Current situation and summary of change
+---------------------------------------
+
+We are currently experiencing some performance problems related to the large
+size of the occurrences table. As a result, we have implemented a feature
+which splits this table by year. This is based on the course start date, so
+all data for a course that starts in 2014 will be in the 2014 table.
+
+This feature is optional. If you do not turn it on in the admin settings,
+behaviour should be unchanged.
+
+New database structure
+----------------------
+
+* We are creating 10 new occurrences and documents tables for each year from
+  2011 (the first year in which this system was used) through to 2020.
+  - Each table definition is the same as the current table, with the same
+    indexes.
+  - Names are e.g. local_ousearch_occurs_2011 and local_ousearch_docs_2011.
+* If the search system is used with any start date prior to 2011, it will use
+  the 2011 tables.
+* If the search system is used with any start date after 2020, it will throw
+  an exception.
+* If the search system is used with any start date in 2020, a debugging message
+  will appear (to give a one-year warning that you need to add more tables if
+  it's still in use).
+* An additional table local_ousearch_courseyears keeps track of what year each
+  course is (this is only used to track when the start date of a course
+  changes, and not during normal usage).
+
+New admin settings
+------------------
+
+1. Enable per-year tables
+
+If this setting is not turned on, then the system will continue to use a single
+table.
+
+The setting has the following states:
+* Off (still using single table).
+* Transferring data
+* On (all data transferred).
+
+The administrator can switch it from Off to Transferring, but cannot switch it
+off again. The system itself may switch it later from Transferring to On.
+
+This setting displays progress (as a percentage of websites that have been
+updated) once you have turned it on.
+
+2. Year table split time
+
+Controls the amount of time to spend per cron run transferring data from the
+old table to the new table. (Note that the frequency and timing of these cron
+runs can be scheduled using the general task settings.)
+
+The default option is 10 minutes.
+
+3. Year table change date time
+
+Controls the maximum amount of time to spend per cron run transferring data
+between years in cases where somebody changes the start date of a course.
+
+The default option is 10 minutes.
+
+Enabling the system
+-------------------
+
+When you enable that system, over a number of cron runs the search data will
+gradually be copied into the new tables.
+
+THINGS TO CHECK BEFORE ENABLING THE SYSTEM:
+
+1. Data is deleted from the old tables only when the entire process is complete
+   (all courses have been moved). At this point the old tables will be truncated.
+   This implies that extra database space is required during the enabling process.
+   For example, if your local_ousearch tables total 30GB, you will need an extra
+   30GB or more of free space in order to hold the copied data. The space will be
+   freed up once the system is completely enabled.
+
+2. Ensure you have no courses with start dates later than 2019. Such courses may
+   cause the transfer process to stall or fail.
+
+During the transfer process, users should still be able to search and also to
+add and edit searchable content at all points. If a course has not yet been
+completely transferred, searching works using the old tables. Once a course has
+been completely transferred, searching (and data adding etc.) works with the
+new tables.
+
+Creating new courses
+--------------------
+
+There should be no change to system behaviour when creating new courses.
+Search should work for all content added to the new course, and the data
+should transparently be stored in the relevant tables depending on the start
+year of the course.
+
+If you try to create a course with start date from 2020 onward, you may see a
+warning or the creation may fail. When this system is enabled, we don't support
+courses starting from 2020 onward.
+
+Restoring courses
+-----------------
+
+There should be no change to system behaviour when restoring courses or rolling
+them forward. Search should continue to operate on the restored course.
+
+If you try to restore a course with start date from 2020 onward, you may see a
+warning or the creation may fail. When this system is enabled, we don't support
+courses starting from 2020 onward.
+
+Changing course dates
+---------------------
+
+When this system is enabled, you should avoid changing the start date of any
+course to a different year, if that course contains searchable content.
+
+Changing a start date to a different year will cause search to temporarily
+break for that course (it will not find anything). The cron process that
+handles this will gradually move search data into the new year, so the search
+facility will eventually be restored.

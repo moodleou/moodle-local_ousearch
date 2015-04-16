@@ -8,6 +8,8 @@
  * @package local_ousearch
  *//** */
 
+use \local_ousearch\year_tables;
+
 /**
  * Class that handles search documents. A search document represents a single
  * thing that can be found by the search engine, so it could be a forum post,
@@ -28,11 +30,30 @@ class local_ousearch_document {
         global $DB;
         $where = 'courseid=? AND coursemoduleid=?';
         $wherearray = array($cm->course, $cm->id);
-        $DB->delete_records_select('local_ousearch_occurrences',
-                'documentid IN (SELECT id FROM {local_ousearch_documents} WHERE ' .
+
+        $course = get_course($cm->course);
+        $year = year_tables::get_year_for_tables($course);
+        $occurstable = year_tables::get_occurs_table($year);
+        $docstable = year_tables::get_docs_table($year);
+
+        $DB->delete_records_select($occurstable,
+                'documentid IN (SELECT id FROM {' . $docstable . '} WHERE ' .
                 $where . ')', $wherearray);
-        $DB->delete_records_select('local_ousearch_documents',
-                $where, $wherearray);
+        $DB->delete_records_select($docstable, $where, $wherearray);
+
+        // If this course is currently being transferred to the year-table
+        // system, delete in both places in case this data was already
+        // transferred.
+        if (!$year && year_tables::currently_transferring_course($cm->course)) {
+            $newyear = year_tables::get_year_for_course($course);
+            $occurstable = year_tables::get_occurs_table($newyear);
+            $docstable = year_tables::get_occurs_table($newyear);
+            $DB->delete_records_select($occurstable,
+                    'documentid IN (SELECT id FROM {' . $docstable . '} WHERE ' .
+                    $where . ')', $wherearray);
+            $DB->delete_records_select($docstable,
+                    $where, $wherearray);
+        }
     }
 
     /**
@@ -55,6 +76,41 @@ class local_ousearch_document {
         }
         if ($timeexpires) {
             $this->timeexpires = (int)$timeexpires;
+        }
+    }
+
+    /**
+     * Initialises document with all fields from database record.
+     *
+     * @param stdClass $rec Database record
+     */
+    public function init_from_record($rec) {
+        $this->id = $rec->id;
+        $this->plugin = $rec->plugin;
+        $this->timemodified = $rec->timemodified;
+        if ($rec->courseid) {
+            $this->courseid = $rec->courseid;
+        }
+        if ($rec->coursemoduleid) {
+            $this->coursemoduleid = $rec->coursemoduleid;
+        }
+        if ($rec->groupid) {
+            $this->groupid = $rec->groupid;
+        }
+        if ($rec->userid) {
+            $this->userid = $rec->userid;
+        }
+        if ($rec->stringref) {
+            $this->stringref = $rec->stringref;
+        }
+        if ($rec->intref1) {
+            $this->intref1 = $rec->intref1;
+        }
+        if ($rec->intref2) {
+            $this->intref2 = $rec->intref2;
+        }
+        if ($rec->timeexpires) {
+            $this->timeexpires = $rec->timeexpires;
         }
     }
 
@@ -107,14 +163,50 @@ class local_ousearch_document {
     }
 
     /**
+     * Gets the year to use for tables.
+     *
+     * @return int|bool Year number or false if not using system
+     */
+    private function get_year_for_tables() {
+        if (empty($this->courseid)) {
+            return \local_ousearch\year_tables::get_year_for_tables(null);
+        } else {
+            return \local_ousearch\year_tables::get_year_for_tables(get_course($this->courseid));
+        }
+    }
+
+    /**
+     * Gets the documents table to use for this document.
+     *
+     * @return string Table name (without Moodle prefix)
+     */
+    protected function get_documents_table() {
+        return year_tables::get_docs_table($this->get_year_for_tables());
+    }
+
+    /**
+     * Gets the occurrences table to use for this document.
+     *
+     * @return string Table name (without Moodle prefix)
+     */
+    protected function get_occurrences_table() {
+        return year_tables::get_occurs_table($this->get_year_for_tables());
+    }
+
+    /**
      * Finds an existing document. The necessary set_ methods must already
      * have been called. If successful, $this->id will be set.
+     *
+     * @param string $table Table to look in (leave null for default)
      * @return True for success, false for failure
      */
-    public function find() {
+    public function find($table = null) {
         global $DB;
         if (!empty($this->id)) { // Already got it
             return true;
+        }
+        if (!$table) {
+            $table = $this->get_documents_table();
         }
         // Set up conditions and start off with plugin restriction
         $wherearray = array();
@@ -164,8 +256,7 @@ class local_ousearch_document {
         } else {
             $where .= " AND intref2 IS NULL";
         }
-        $this->id = $DB->get_field_select('local_ousearch_documents', 'id',
-                $where, $wherearray);
+        $this->id = $DB->get_field_select($table, 'id', $where, $wherearray);
         return $this->id ? true : false;
     }
 
@@ -192,7 +283,10 @@ class local_ousearch_document {
         if (!$this->find()) {
             // Arse around with slashes so we can insert it safely
             // but the data is corrected again later.
-            $this->id = $DB->insert_record('local_ousearch_documents', $this);
+            $this->id = $DB->insert_record($this->get_documents_table(), $this);
+        } else {
+            // When updating existing document, set timemodified.
+            $timemodified = time();
         }
 
         // Update document record if needed
@@ -205,11 +299,11 @@ class local_ousearch_document {
             if ($timeexpires) {
                 $update->timeexpires = $timeexpires;
             }
-            $DB->update_record('local_ousearch_documents', $update);
+            $DB->update_record($this->get_documents_table(), $update);
         }
 
         // Delete existing words
-        $DB->delete_records('local_ousearch_occurrences',
+        $DB->delete_records($this->get_occurrences_table(),
                 array('documentid' => $this->id));
 
         // Extra strings are just counted as more content in the database
@@ -368,7 +462,7 @@ class local_ousearch_document {
                         $score;
             }
             if (!pg_copy_from($DB->get_pgsql_connection_id(),
-                    $DB->get_prefix() . 'local_ousearch_occurrences', $data)) {
+                    $DB->get_prefix() . $this->get_occurrences_table(), $data)) {
                 throw new dml_exception(
                         'fastinserterror', 'local_ousearch');
             }
@@ -379,7 +473,7 @@ class local_ousearch_document {
                 $bodycount = empty($count[false]) ? 0 : $count[false];
                 $score = ($bodycount<15 ? $bodycount : 15) +
                         ($titlecount<15 ? $titlecount*16 : 15*16);
-                $DB->execute('INSERT INTO {local_ousearch_occurrences}' .
+                $DB->execute('INSERT INTO {' . $this->get_occurrences_table() . '}' .
                         '(wordid, documentid, score) VALUES(?,?,?)',
                         array($dbwords[$word]->id, $this->id, $score));
             }
@@ -509,11 +603,27 @@ class local_ousearch_document {
      */
     public function wipe_document($id) {
         global $DB;
-        // Delete existing words
-        $DB->delete_records('local_ousearch_occurrences',
-                array('documentid' => $id));
-        $DB->delete_records('local_ousearch_documents',
-                array('id' => $id));
+
+        // Delete existing document and occurrences.
+        $DB->delete_records($this->get_occurrences_table(), array('documentid' => $id));
+        $DB->delete_records($this->get_documents_table(), array('id' => $id));
+
+        // If the course is currently being transferred we should get rid of it
+        // from the new table too.
+        if (isset($this->courseid) &&
+                year_tables::currently_transferring_course($this->courseid)) {
+            $course = get_course($this->courseid);
+            $year = year_tables::get_year_for_course($course);
+            $otherdoc = new local_ousearch_document();
+            $otherdoc->init_from_record($this);
+            unset($otherdoc->id);
+            if ($otherdoc->find('local_ousearch_docs_' . $year)) {
+                $DB->delete_records($this->get_occurrences_table(), array('documentid' => $id));
+                $DB->delete_records($this->get_documents_table(), array('id' => $id));
+
+            }
+        }
+
     }
 }
 
@@ -764,7 +874,15 @@ class local_ousearch_search {
         }
         $this->cmarray = $cmarray;
         if ($cmarray) {
-            $this->courseid = 0;
+            $singlecourse = 0;
+            foreach ($cmarray as $cm) {
+                if (!$singlecourse) {
+                    $singlecourse = $cm->course;
+                } else if ($singlecourse != $cm->course) {
+                    $singlecourse = -1;
+                }
+            }
+            $this->courseid = $singlecourse > 0 ? $singlecourse : 0;
             $this->coursemoduleid = 0;
         }
     }
@@ -1002,13 +1120,15 @@ class local_ousearch_search {
     /**
      * Runs the database query corresponding to this query. (Basically ANDs all
      * the required terms. Doesn't handle phrases.)
+     *
      * @param int $start First DB record
      * @param int $limit Number of DB records
+     * @param int|bool Year tables to use or false for none
      * @return Array (with 0 - $limit records) of records including
      *   ->documentid, ->totalscore, all fields from local_ousearch_documents,
      *   courseshortname, coursefullname, and groupname
      */
-    private function internal_query($start,$limit) {
+    private function internal_query($start, $limit, $year) {
         global $DB, $CFG;
         $from = '';
         $fromarray = array();
@@ -1016,21 +1136,23 @@ class local_ousearch_search {
         $wherearray = array();
         $total = '';
 
+        $occurstable = year_tables::get_occurs_table($year);
+        $docstable = year_tables::get_docs_table($year);
+
         $join = 0;
         foreach ($this->terms as $term) {
             foreach ($term->ids as $id) {
                 $alias = "o$join";
                 if ($join==0) {
-                    $from .= "{local_ousearch_occurrences} $alias";
+                    $from .= "{" . $occurstable . "} $alias ";
                     $where .= "$alias.wordid = ?";
                     $wherearray[] = $id;
                     $total .= "$alias.score";
                 } else {
                     // Note: This line uses the id directly rather than as a ?
                     // parameter, because
-                    $from .= "
-INNER JOIN {local_ousearch_occurrences} $alias
-    ON $alias.documentid=o0.documentid AND $alias.wordid=?";
+                    $from .= "JOIN {" . $occurstable . "} $alias
+                            ON $alias.documentid = o0.documentid AND $alias.wordid = ? ";
                     $fromarray[] = $id;
                     $total .= "+$alias.score";
                 }
@@ -1050,9 +1172,8 @@ INNER JOIN {local_ousearch_occurrences} $alias
         foreach ($this->negativeterms as $term) {
             if (count($term->ids)==1) {
                 $alias = "o$join";
-                $from .= "
-LEFT JOIN {local_ousearch_occurrences} $alias
-    ON $alias.documentid=o0.documentid AND $alias.wordid=?";
+                $from .= "LEFT JOIN {" . $occurstable . "} $alias
+                        ON $alias.documentid = o0.documentid AND $alias.wordid = ?";
                 $fromarray[] = $term->ids[0];
                 $total .= "-(CASE WHEN $alias.score IS NULL THEN 0 ELSE 999999 END)";
                 $join++;
@@ -1061,16 +1182,17 @@ LEFT JOIN {local_ousearch_occurrences} $alias
 
         list ($restrict, $restrictarray) = $this->internal_get_restrictions();
         $query="
-SELECT
-    o0.documentid,$total AS totalscore,d.*,
-    c.shortname AS courseshortname,c.fullname AS coursefullname,
-    g.name AS groupname
-FROM $from
-INNER JOIN {local_ousearch_documents} d ON d.id=o0.documentid
-LEFT JOIN {course} c ON d.courseid=c.id
-LEFT JOIN {groups} g ON d.groupid=g.id
-WHERE $where\n$restrict\nAND $total>0
-ORDER BY totalscore DESC, o0.documentid";
+                SELECT o0.documentid, $total AS totalscore, d.*,
+                       c.shortname AS courseshortname, c.fullname AS coursefullname,
+                       g.name AS groupname
+                  FROM $from
+                  JOIN {" . $docstable . "} d ON d.id = o0.documentid
+             LEFT JOIN {course} c ON d.courseid = c.id
+             LEFT JOIN {groups} g ON d.groupid = g.id
+                 WHERE $where
+                       $restrict
+                       AND $total > 0
+              ORDER BY totalscore DESC, o0.documentid";
         $queryarray = array_merge($fromarray, $wherearray, $restrictarray);
         $result = $DB->get_records_sql($query, $queryarray, $start, $limit);
         if (!$result) {
@@ -1403,16 +1525,29 @@ ORDER BY totalscore DESC, o0.documentid";
 
     /**
      * Runs actual query and obtains results.
+     *
      * @param int $dbstart Start position within database results (because
      *   postprocessing is done which filters out some results, this might
      *   not be the same as the number of results shown previously)
      * @param int $desired Number of desired results to return
-     * @return object Result object. Parameters ->success, then
+     * @return stdClass Result object. Parameters ->success, then
      *   ->dbstart and ->results and ->dbrows if success is true, or
      *   ->problemword otherwise.
      */
     public function query($dbstart=0, $desired=10) {
         $return = new StdClass;
+
+        // Work out the year for search.
+        if ($this->courseid) {
+            $course = get_course($this->courseid);
+            $year = year_tables::get_year_for_tables($course);
+        } else {
+            // Non-course searches are not allowed when using year tables.
+            if (year_tables::is_partially_or_fully_enabled()) {
+                throw new coding_exception('When using year tables, whole-site searches are not permitted');
+            }
+            $year = false;
+        }
 
         // Translate words to IDs
         list($ok, $problemword) = $this->internal_translate_words();
@@ -1452,7 +1587,7 @@ ORDER BY totalscore DESC, o0.documentid";
             if ($dbrequest > 1000) {
                 $dbrequest = 1000;
             }
-            $dbresults = $this->internal_query($dbstart, $dbrequest);
+            $dbresults = $this->internal_query($dbstart, $dbrequest, $year);
             $filtered = $this->internal_filter($dbresults, $left);
             $results = array_merge($results, $filtered->results);
             $dbstart += $filtered->dbnext;
@@ -1710,16 +1845,16 @@ ORDER BY totalscore DESC, o0.documentid";
     public static function get_group_exceptions($courseid) {
         global $DB;
 
+        $year = year_tables::get_year_for_course(get_course($courseid));
+        $docstable = year_tables::get_docs_table($year);
+
         // Get all CMs that have a document
         $possible = $DB->get_records_sql("
-SELECT
-    DISTINCT cm.id AS cmid, cm.course AS cmcourse, cm.groupmode AS cmgroupmode, x.*
-FROM
-    {local_ousearch_documents} bod
-    INNER JOIN {course_modules} cm ON bod.coursemoduleid=cm.id
-    INNER JOIN {context} x ON x.instanceid=cm.id AND x.contextlevel=" . CONTEXT_MODULE . "
-WHERE
-    bod.courseid=?", array($courseid));
+                SELECT DISTINCT cm.id AS cmid, cm.course AS cmcourse, cm.groupmode AS cmgroupmode, x.*
+                  FROM {" . $docstable . "} bod
+                  JOIN {course_modules} cm ON bod.coursemoduleid = cm.id
+                  JOIN {context} x ON x.instanceid = cm.id AND x.contextlevel = " . CONTEXT_MODULE . "
+                 WHERE bod.courseid = ?", array($courseid));
 
         // Check accessallgroups on each one
         $results = array();

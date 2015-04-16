@@ -15,12 +15,27 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Version.
+ * Event handler so we are informed when anyone edits a course, in case they
+ * changed the start date.
  *
  * @package local_ousearch
  * @copyright 2015 The Open University
  * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-$plugin->version = 2015050100;
-$plugin->requires = 2011120100;
+defined('MOODLE_INTERNAL') || die();
+
+$observers = array (
+    array(
+        'eventname' => '\core\event\course_updated',
+        'callback'  => '\local_ousearch\event_handler::course_updated'
+    ),
+    array(
+        'eventname' => '\core\event\course_created',
+        'callback'  => '\local_ousearch\event_handler::course_created'
+    ),
+    array(
+        'eventname' => '\core\event\course_restored',
+        'callback'  => '\local_ousearch\event_handler::course_restored'
+    ),
+);
