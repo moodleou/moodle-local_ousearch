@@ -1,14 +1,30 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+
 /**
  * Library functions that provide full-text search.
  *
- * @copyright &copy; 2007-2010 The Open University
- * @author s.marshall@open.ac.uk
- * @license http://www.gnu.org/copyleft/gpl.html GNU Public License
  * @package local_ousearch
- *//** */
+ * @copyright 2015 The Open University
+ * @license http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 
 use \local_ousearch\year_tables;
+
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Class that handles search documents. A search document represents a single
@@ -202,13 +218,13 @@ class local_ousearch_document {
      */
     public function find($table = null) {
         global $DB;
-        if (!empty($this->id)) { // Already got it
+        if (!empty($this->id)) { // Already got it.
             return true;
         }
         if (!$table) {
             $table = $this->get_documents_table();
         }
-        // Set up conditions and start off with plugin restriction
+        // Set up conditions and start off with plugin restriction.
         $wherearray = array();
         if (isset($this->plugin)) {
             $where = "plugin=?";
@@ -218,7 +234,7 @@ class local_ousearch_document {
             $where .= " AND courseid=?";
             $wherearray[] = $this->courseid;
         } else {
-            $where.=" AND courseid IS NULL";
+            $where .= " AND courseid IS NULL";
         }
         if (isset($this->coursemoduleid)) {
             $where .= " AND coursemoduleid=?";
@@ -236,7 +252,7 @@ class local_ousearch_document {
             $where .= " AND userid=?";
             $wherearray[] = $this->userid;
         } else {
-            $where.=" AND userid IS NULL";
+            $where .= " AND userid IS NULL";
         }
         if (isset($this->stringref)) {
             $where .= " AND stringref=?";
@@ -279,7 +295,7 @@ class local_ousearch_document {
             $extrastrings=null) {
         global $DB;
         $transaction = $DB->start_delegated_transaction();
-        // Find document ID, creating document if needed
+        // Find document ID, creating document if needed.
         if (!$this->find()) {
             // Arse around with slashes so we can insert it safely
             // but the data is corrected again later.
@@ -289,7 +305,7 @@ class local_ousearch_document {
             $timemodified = time();
         }
 
-        // Update document record if needed
+        // Update document record if needed.
         if ($timemodified || $timeexpires) {
             $update = new StdClass;
             $update->id = $this->id;
@@ -302,18 +318,18 @@ class local_ousearch_document {
             $DB->update_record($this->get_documents_table(), $update);
         }
 
-        // Delete existing words
+        // Delete existing words.
         $DB->delete_records($this->get_occurrences_table(),
                 array('documentid' => $this->id));
 
-        // Extra strings are just counted as more content in the database
+        // Extra strings are just counted as more content in the database.
         if ($extrastrings) {
             foreach ($extrastrings as $string) {
-                $content.=' '.$string;
+                $content .= ' ' . $string;
             }
         }
 
-        // Add new words
+        // Add new words.
         $this->internal_add_words($title, $content);
         $transaction->allow_commit();
     }
@@ -328,12 +344,12 @@ class local_ousearch_document {
      */
     public static function strip_xhtml($content) {
         $content = preg_replace(array(
-            '|<!--.*?-->|s',  // Comments
-            '|<script.*?</script>|s',  // Scripts
-            '|<noscript.*?</noscript>|s',  // Noscript
-            '|<object.*?</object>|s',  // Objects
-            ),'',$content);
-        $content = preg_replace('|<.*?>|', ' ', $content);  // All tags
+                '|<!--.*?-->|s',  // Comments.
+                '|<script.*?</script>|s',  // Scripts.
+                '|<noscript.*?</noscript>|s',  // Noscript.
+                '|<object.*?</object>|s',  // Objects.
+                ), '', $content);
+        $content = preg_replace('|<.*?>|', ' ', $content);  // All tags.
         return html_entity_decode($content, ENT_QUOTES, 'UTF-8');
     }
 
@@ -344,20 +360,20 @@ class local_ousearch_document {
      * @param string $content XHTML content of document
      * @throws dml_exception If failure
      */
-    private function internal_add_words($title,$content) {
+    private function internal_add_words($title, $content) {
         global $DB;
 
-        // Build up set of words with counts
+        // Build up set of words with counts.
         $wordset = array();
         self::internal_add_to_wordset($wordset, $title, true);
         self::internal_add_to_wordset($wordset, self::strip_xhtml($content));
-        if (count($wordset)==0) {
+        if (count($wordset) == 0) {
             return true;
         }
 
         // Cut down all words to max db length.
-        foreach ($wordset as $word=>$count) {
-            // Check byte length just to save time
+        foreach ($wordset as $word => $count) {
+            // Check byte length just to save time.
             if (strlen($word) > self::MAX_WORD_LENGTH) {
                 // Cut length of word.
                 $short = core_text::substr($word, 0, self::MAX_WORD_LENGTH);
@@ -373,14 +389,14 @@ class local_ousearch_document {
             }
         }
 
-        // Get word IDs from database
+        // Get word IDs from database.
         $list = '';
         $listarray = array();
         foreach ($wordset as $word => $count) {
             $list .= ",?";
             $listarray[] = $word;
         }
-        $list = substr($list, 1); // Get rid of first comma
+        $list = substr($list, 1); // Get rid of first comma.
         $dbwords = $DB->get_records_select('local_ousearch_words',
                 'word IN (' . $list . ')', $listarray, '', 'word,id');
 
@@ -392,16 +408,16 @@ class local_ousearch_document {
         // the Postgres driver. (This override is very simple. It is available
         // in OU public repository in lib/dml folder.)
         if ($fastpg = is_a($DB, 'ou_pgsql_native_moodle_database')) {
-            // Do this in 512-word blocks (there is a limit at 1664)
+            // Do this in 512-word blocks (there is a limit at 1664).
             $sequences = array();
             $pos = 0;
             $missingwords = array();
             foreach ($wordset as $word => $count) {
                 if (!isset($dbwords[$word])) {
                     $missingwords[$pos] = $word;
-                    $sequenceindex = (int)($pos/512);
+                    $sequenceindex = (int)($pos / 512);
                     if (!array_key_exists($sequenceindex, $sequences)) {
-                        $sequences[$sequenceindex]='';
+                        $sequences[$sequenceindex] = '';
                     }
                     // Note: Cannot use {} syntax here because the sequence name
                     // is inside a string so I don't think Moodle will replace
@@ -412,15 +428,15 @@ class local_ousearch_document {
                     $pos++;
                 }
             }
-            if (count($missingwords)>0) {
+            if (count($missingwords) > 0) {
                 foreach ($sequences as $sequenceindex => $sequenceselect) {
                     $rs = $DB->get_recordset_sql($sql = 'SELECT ' .
                             substr($sequences[$sequenceindex], 1), array());
                     $fields = (array)$rs->current();
                     $rs->close();
                     $data = array();
-                    for($i=$sequenceindex*512;
-                            $i<$pos && $i<($sequenceindex+1)*512;
+                    for ($i = $sequenceindex * 512;
+                            $i < $pos && $i < ($sequenceindex + 1) * 512;
                             $i++) {
                         $id = $fields['s' . $i];
                         $data[] = $id . "\t" . $missingwords[$i];
@@ -437,8 +453,8 @@ class local_ousearch_document {
             }
         } else {
             // This is the slow Moodle-standard way to insert words, for all
-            // other database drivers
-            foreach ($wordset as $word=>$count) {
+            // other database drivers.
+            foreach ($wordset as $word => $count) {
                 if (!isset($dbwords[$word])) {
                     $newword = (object)array('word' => $word);
                     $newword->id = $DB->insert_record(
@@ -448,15 +464,15 @@ class local_ousearch_document {
             }
         }
 
-        // Now add the records attaching the words, with scoring, to this document
-        if ($fastpg && count($wordset)>0) {
-            // Fast insert data
+        // Now add the records attaching the words, with scoring, to this document.
+        if ($fastpg && count($wordset) > 0) {
+            // Fast insert data.
             $data = array();
-            foreach ($wordset as $word=>$count) {
+            foreach ($wordset as $word => $count) {
                 $titlecount = empty($count[true]) ? 0 : $count[true];
                 $bodycount = empty($count[false]) ? 0 : $count[false];
-                $score = ($bodycount<15 ? $bodycount : 15) +
-                        ($titlecount<15 ? $titlecount*16 : 15*16);
+                $score = ($bodycount < 15 ? $bodycount : 15) +
+                        ($titlecount < 15 ? $titlecount * 16 : 15 * 16);
 
                 $data[] = $dbwords[$word]->id . "\t" . $this->id . "\t" .
                         $score;
@@ -467,12 +483,12 @@ class local_ousearch_document {
                         'fastinserterror', 'local_ousearch');
             }
         } else {
-            // Slow insert data for all databases
-            foreach ($wordset as $word=>$count) {
+            // Slow insert data for all databases.
+            foreach ($wordset as $word => $count) {
                 $titlecount = empty($count[true]) ? 0 : $count[true];
                 $bodycount = empty($count[false]) ? 0 : $count[false];
-                $score = ($bodycount<15 ? $bodycount : 15) +
-                        ($titlecount<15 ? $titlecount*16 : 15*16);
+                $score = ($bodycount < 15 ? $bodycount : 15) +
+                        ($titlecount < 15 ? $titlecount * 16 : 15 * 16);
                 $DB->execute('INSERT INTO {' . $this->get_occurrences_table() . '}' .
                         '(wordid, documentid, score) VALUES(?,?,?)',
                         array($dbwords[$word]->id, $this->id, $score));
@@ -495,7 +511,7 @@ class local_ousearch_document {
      *   in characters
      */
     public static function split_words($text, $query=false, $positions=false) {
-        // Treat single right quote as apostrophe
+        // Treat single right quote as apostrophe.
         $text = str_replace("\xe2\x80\x99", "'", $text);
 
         // Words include all letters, numbers, and apostrophes. Though this is
@@ -506,9 +522,9 @@ class local_ousearch_document {
                 '_', core_text::strtolower($text));
 
         if (!$positions) {
-            $text = preg_replace('/\x27+(_|$)/u','_', $text);
-            $text = preg_replace('/(^|_)\x27+/u','_', $text);
-            $text = preg_replace('/_+/u','_', $text);
+            $text = preg_replace('/\x27+(_|$)/u', '_', $text);
+            $text = preg_replace('/(^|_)\x27+/u', '_', $text);
+            $text = preg_replace('/_+/u', '_', $text);
             $result = explode('_', $text);
             $words = array();
             foreach ($result as $word) {
@@ -524,12 +540,12 @@ class local_ousearch_document {
             $words = array();
             $positions = array();
             $pos = 0;
-            while($pos < core_text::strlen($text)) {
-                if (core_text::substr($text,$pos,1) === '_') {
+            while ($pos < core_text::strlen($text)) {
+                if (core_text::substr($text, $pos, 1) === '_') {
                     $pos++;
                     continue;
                 }
-                $nextunderline = core_text::strpos($text, '_', $pos+1);
+                $nextunderline = core_text::strpos($text, '_', $pos + 1);
                 if ($nextunderline === false) {
                     $nextunderline = core_text::strlen($text);
                 }
@@ -549,7 +565,7 @@ class local_ousearch_document {
      */
     private static function internal_replace_callback($matches) {
         $underlines = '';
-        for($i=0; $i<core_text::strlen($matches[0]); $i++) {
+        for ($i = 0; $i < core_text::strlen($matches[0]); $i++) {
             $underlines .= '_';
         }
         return $underlines;
@@ -563,7 +579,7 @@ class local_ousearch_document {
      */
     private static function replace_with_underline($pattern, $text) {
         return preg_replace_callback($pattern,
-                array('local_ousearch_document','internal_replace_callback'),
+                array('local_ousearch_document', 'internal_replace_callback'),
                 $text);
     }
 
@@ -578,10 +594,9 @@ class local_ousearch_document {
     private function internal_add_to_wordset(&$wordset, $text, $title=false) {
         $words = self::split_words($text);
         foreach ($words as $word) {
-            // Count occurrences in title or content
-            $before = isset($wordset[$word][$title])
-                    ? $wordset[$word][$title] : 0;
-            $wordset[$word][$title] = $before+1;
+            // Count occurrences in title or content.
+            $before = isset($wordset[$word][$title]) ? $wordset[$word][$title] : 0;
+            $wordset[$word][$title] = $before + 1;
         }
     }
 
@@ -589,7 +604,7 @@ class local_ousearch_document {
      * Deletes this document and all its words.
      */
     public function delete() {
-        // Find document ID
+        // Find document ID.
         if (!$this->find()) {
             debugging('Failed to find ousearch document');
             return false;
@@ -654,10 +669,10 @@ class local_ousearch_search {
      */
     const NONE = 'none';
 
-    var $courseid=0, $plugin='', $coursemoduleid=0, $cmarray, $filter=null;
-    var $groupids=null, $allownogroup=true, $groupexceptions=null, $userid=0,
-            $allownouser=true;
-    var $querytext;
+    public $courseid = 0, $plugin = '', $coursemoduleid = 0, $cmarray, $filter = null;
+    public $groupids = null, $allownogroup = true, $groupexceptions = null, $userid = 0,
+            $allownouser = true;
+    public $querytext;
 
     // Search is expressed as follows.
     // Terms, array of objects:
@@ -666,11 +681,11 @@ class local_ousearch_search {
     // ->required (bool)
     // Negative terms, array of objects:
     // ->words (array of string, possibly length 1)
-    // ->ids (matching array of int)
-    var $terms, $negativeterms;
+    // ->ids (matching array of int).
+    public $terms, $negativeterms;
 
-    // True if translate_words has been done
-    var $translated = false;
+    // True if translate_words has been done.
+    public $translated = false;
 
     public function __construct($query) {
         $this->set_query($query);
@@ -683,11 +698,11 @@ class local_ousearch_search {
     public function set_query($query) {
         $this->querytext = $query;
 
-        // Clear the existing arrays
+        // Clear the existing arrays.
         $this->terms = array();
         $this->negativeterms = array();
 
-        // Refill those arrays from the query text
+        // Refill those arrays from the query text.
         $words = local_ousearch_document::split_words($query, true);
         $currentquote = array();
         $sign = false;
@@ -695,7 +710,7 @@ class local_ousearch_search {
         foreach ($words as $word) {
             // Clean word to get rid of +, ", and - except if it's in the middle.
             $cleaned = preg_replace('/(^-)|(-$)/', '',
-                    preg_replace('/[+"]/','',$word));
+                    preg_replace('/[+"]/', '', $word));
 
             // Shorten word if necessary to db length.
             $cleaned = core_text::substr($cleaned, 0,
@@ -703,7 +718,7 @@ class local_ousearch_search {
 
             if ($inquote) {
                 // Handle hyphenated words.
-                if (strpos($cleaned,'-') !== false) {
+                if (strpos($cleaned, '-') !== false) {
                     foreach (explode('-', $cleaned) as $subword) {
                         $currentquote[] = $subword;
                     }
@@ -715,34 +730,34 @@ class local_ousearch_search {
                 // The below are all single-byte characters so we don't need to
                 // use textlib here.
                 $firstchar = substr($word, 0, 1);
-                $secondchar = strlen($word)>1 ? substr($word,1,1) : false;
+                $secondchar = strlen($word) > 1 ? substr($word, 1, 1) : false;
 
                 if ($firstchar == '"') {
-                    // "a phrase"
+                    // E.g. "a phrase".
                     $currentquote = self::internal_hyphenated_array($cleaned);
                     $inquote = true;
                     $sign = '';
                     self::internal_end_quote($currentquote, $word, $sign, $inquote);
-                } else if ($firstchar=='+' && $secondchar=='"') {
-                    // +"a phrase"
+                } else if ($firstchar == '+' && $secondchar == '"') {
+                    // E.g. +"a phrase".
                     $currentquote = self::internal_hyphenated_array($cleaned);
                     $inquote = true;
                     $sign = '+';
                     self::internal_end_quote($currentquote, $word, $sign, $inquote);
-                } else if ($firstchar=='-' && $secondchar=='"') {
-                    // -"a phrase"
+                } else if ($firstchar == '-' && $secondchar == '"') {
+                    // E.g. -"a phrase".
                     $currentquote = self::internal_hyphenated_array($cleaned);
                     $inquote = true;
                     $sign = '-';
                     self::internal_end_quote($currentquote, $word, $sign, $inquote);
-                } else if ($firstchar=='+' && $cleaned !== '') {
-                    // +cat
+                } else if ($firstchar == '+' && $cleaned !== '') {
+                    // E.g. +cat.
                     $term = new StdClass;
                     $term->words = self::internal_hyphenated_array($cleaned);
                     $term->required = true;
                     $this->terms[] = $term;
-                } else if ($firstchar=='-' && $cleaned !== '') {
-                    // -cat
+                } else if ($firstchar == '-' && $cleaned !== '') {
+                    // E.g. -cat.
                     $term = new StdClass;
                     $term->words = self::internal_hyphenated_array($cleaned);
                     $this->negativeterms[] = $term;
@@ -764,7 +779,7 @@ class local_ousearch_search {
      * @param bool $inquote True if in quote (OUT: Set to false if quote ended)
      */
     private function internal_end_quote($currentquote, $word, $sign, &$inquote) {
-        if (substr($word, strlen($word)-1, 1) == '"') {
+        if (substr($word, strlen($word) - 1, 1) == '"') {
             $term = new StdClass;
             $term->words = $currentquote;
             switch($sign) {
@@ -786,7 +801,7 @@ class local_ousearch_search {
     }
 
     private function internal_hyphenated_array($cleaned) {
-        if (strpos($cleaned,'-') !== false) {
+        if (strpos($cleaned, '-') !== false) {
             $currentquote = array();
             foreach (explode('-', $cleaned) as $subword) {
                 $currentquote[] = $subword;
@@ -822,9 +837,9 @@ class local_ousearch_search {
             }
             if ($cm->uservisible) {
                 require_once($CFG->dirroot . '/mod/' . $cm->modname . '/lib.php');
-                $get_cm_function = $cm->modname . '_ousearch_add_visible_module';
-                if (function_exists($get_cm_function)) {
-                    $visiblecms[$cm->id] = $get_cm_function($cm, $course);
+                $getcmfunction = $cm->modname . '_ousearch_add_visible_module';
+                if (function_exists($getcmfunction)) {
+                    $visiblecms[$cm->id] = $getcmfunction($cm, $course);
                 } else {
                     $visiblecms[$cm->id] = $cm;
                 }
@@ -853,7 +868,7 @@ class local_ousearch_search {
             $this->courseid = 0;
             $this->coursemoduleid = 0;
         } else {
-            $this->cmarray=null;
+            $this->cmarray = null;
             $this->courseid = (int)$cm->course;
             $this->coursemoduleid = (int)$cm->id;
         }
@@ -926,9 +941,9 @@ class local_ousearch_search {
      * @param bool $ornone If true, also returns results that have no user
      *   (ignored if first parameter is local_ousearch_search::NONE or 0)
      */
-    public function set_user_id($userid,$ornone=true) {
-        $this->userid=$userid;
-        $this->allownouser=$ornone;
+    public function set_user_id($userid, $ornone = true) {
+        $this->userid = $userid;
+        $this->allownouser = $ornone;
     }
 
     /**
@@ -980,9 +995,9 @@ class local_ousearch_search {
                 if ($this->groupexceptions) {
                     $gxcourses = array();
                     $gxcms = array();
-                    foreach ($this->groupexceptions AS $cm) {
+                    foreach ($this->groupexceptions as $cm) {
                         // If we are restricting to CMs, don't bother including
-                        // group exceptions for CMs that are not in that list
+                        // group exceptions for CMs that are not in that list.
                         if ($cmrestrictions) {
                             if (!array_key_exists($cm->id, $cmrestrictions)) {
                                 continue;
@@ -1030,7 +1045,7 @@ class local_ousearch_search {
                 if ($this->allownouser) {
                     $where .= ' OR d.userid IS NULL';
                 }
-                $where.=')';
+                $where .= ')';
             }
         }
         return array($where, $wherearray);
@@ -1047,23 +1062,23 @@ class local_ousearch_search {
         global $DB;
         $this->translated = false;
 
-        // Get list of all words used
+        // Get list of all words used.
         $allwords = array();
         foreach (array_merge($this->terms, $this->negativeterms) as $term) {
             $allwords = array_merge($allwords, $term->words);
         }
         $allwords = array_unique($allwords);
-        if (count($allwords)===0) {
+        if (count($allwords) === 0) {
             return array(false, null);
         }
 
-        // OK, great, now let's build a query for all those words
+        // OK, great, now let's build a query for all those words.
         list ($wordlistwhere, $wordlistwherearray) =
                 $DB->get_in_or_equal($allwords);
         $words = $DB->get_records_select('local_ousearch_words',
             'word ' . $wordlistwhere, $wordlistwherearray, '', 'word,id');
 
-        // Convert words to IDs
+        // Convert words to IDs.
         $newterms = array();
         $lastmissed = '';
         foreach ($this->terms as $term) {
@@ -1080,16 +1095,16 @@ class local_ousearch_search {
             }
             // If we didn't have some words in the term...
             if ($missed) {
-                // Required term? Not going to find anything then
+                // Required term? Not going to find anything then.
                 if ($term->required || !self::SUPPORTS_OR) {
                     return array(false, $lastmissed);
                 }
-                // If not required, just dump that term
+                // If not required, just dump that term.
             } else {
                 $newterms[] = $term;
             }
         }
-        // Must have some (positive) terms
+        // Must have some (positive) terms.
         if (count($newterms) == 0) {
             return array(false, $lastmissed);
         }
@@ -1107,7 +1122,7 @@ class local_ousearch_search {
                     $term->ids[] = $words[$word]->id;
                 }
             }
-            // If we didn't have some words in the term, dump it
+            // If we didn't have some words in the term, dump it.
             if (!$missed) {
                 $newterms[] = $term;
             }
@@ -1143,14 +1158,14 @@ class local_ousearch_search {
         foreach ($this->terms as $term) {
             foreach ($term->ids as $id) {
                 $alias = "o$join";
-                if ($join==0) {
+                if ($join == 0) {
                     $from .= "{" . $occurstable . "} $alias ";
                     $where .= "$alias.wordid = ?";
                     $wherearray[] = $id;
                     $total .= "$alias.score";
                 } else {
                     // Note: This line uses the id directly rather than as a ?
-                    // parameter, because
+                    // parameter, because.
                     $from .= "JOIN {" . $occurstable . "} $alias
                             ON $alias.documentid = o0.documentid AND $alias.wordid = ? ";
                     $fromarray[] = $id;
@@ -1165,12 +1180,12 @@ class local_ousearch_search {
         if ($join > $maxterms) {
             $referer = $_SERVER['HTTP_REFERER'];
             if (!$referer) {
-                $referer = ''; // Use default
+                $referer = ''; // Use default.
             }
             print_error('toomanyterms', 'local_ousearch', $referer, $maxterms);
         }
         foreach ($this->negativeterms as $term) {
-            if (count($term->ids)==1) {
+            if (count($term->ids) == 1) {
                 $alias = "o$join";
                 $from .= "LEFT JOIN {" . $occurstable . "} $alias
                         ON $alias.documentid = o0.documentid AND $alias.wordid = ?";
@@ -1181,7 +1196,7 @@ class local_ousearch_search {
         }
 
         list ($restrict, $restrictarray) = $this->internal_get_restrictions();
-        $query="
+        $query = "
                 SELECT o0.documentid, $total AS totalscore, d.*,
                        c.shortname AS courseshortname, c.fullname AS coursefullname,
                        g.name AS groupname
@@ -1209,7 +1224,7 @@ class local_ousearch_search {
      *   containing database position of next set of results.
      * @throws coding_exception If the results contain unsupported plugin types
      */
-    private function internal_filter($results,$desired) {
+    private function internal_filter($results, $desired) {
         global $CFG;
         $required = array();
         $accepted = array();
@@ -1218,8 +1233,8 @@ class local_ousearch_search {
         $return->dbnext = 0;
         foreach ($results as $result) {
             $return->dbnext++;
-            if (substr($result->plugin,0,4) === 'mod_') {
-                // Module plugins
+            if (substr($result->plugin, 0, 4) === 'mod_') {
+                // Module plugins.
                 $module = substr($result->plugin, 4);
                 $function = $module . '_ousearch_get_document';
                 if (!array_key_exists($module, $required)) {
@@ -1231,14 +1246,14 @@ class local_ousearch_search {
                                 'Module is not searchable. Needs function ' .
                                 $function .
                                 '. See local/ousearch/doc/usage.html.');
-                     }
+                    }
                 }
             } else if (substr($result->plugin, 0, 5) === 'test_') {
-                // Testing code, assumed to already be included
+                // Testing code, assumed to already be included.
                 $function = substr($result->plugin, 5) .
                         '_ousearch_get_document';
             } else {
-                // Nothing else supported yet
+                // Nothing else supported yet.
                 throw new coding_exception(
                         'Unsupported search plugin type ' . $result->plugin,
                         'OU search only currently works for modules');
@@ -1247,32 +1262,29 @@ class local_ousearch_search {
             // Let's request the document. Note that the 'document' fields of
             // $result are those used by this function to find the right one.
             $page = $function($result);
-            // Ignore if we can't find the document
+            // Ignore if we can't find the document.
             if (!$page) {
-                global $UNITTEST;
-                if (!isset($UNITTEST)) {
-                    // Output debug warning, but not while running unit test
-                    debugging('Module ' . $result->plugin .
-                            ' can\'t find search document, removing from results');
-                }
+                // Output debug warning.
+                debugging('Module ' . $result->plugin .
+                        ' can\'t find search document, removing from results');
                 $searchdoc = new local_ousearch_document();
                 $searchdoc->wipe_document($result->id);
                 continue;
             }
 
-            // Page option can request that this result is not included
+            // Page option can request that this result is not included.
             if (!empty($page->hide)) {
                 continue;
             }
 
-            // Strip XHTML from content (need this before phrase scan)
+            // Strip XHTML from content (need this before phrase scan).
             $textcontent = local_ousearch_document::strip_xhtml($page->content);
 
             // Add extra strings to the content after a special don't-show-this
             // marker and with another special marker between each (to prevent
-            // phrases)
-            if (isset($page->extrastrings) && count($page->extrastrings)>0) {
-                $evilmarker = rand(); // This means people can't do it on purpose
+            // phrases).
+            if (isset($page->extrastrings) && count($page->extrastrings) > 0) {
+                $evilmarker = rand(); // This means people can't do it on purpose.
                 $textcontent .= ' xxrealcontentends' . $evilmarker;
                 foreach ($page->extrastrings as $string) {
                     $textcontent .= ' ' . $string . ' xxsplit' . $evilmarker;
@@ -1289,7 +1301,7 @@ class local_ousearch_search {
             $quickcheckcontent = $page->title . ' ' . $textcontent;
             $ok = true;
             foreach ($this->terms as $term) {
-                if (count($term->words)<2) {
+                if (count($term->words) < 2) {
                     continue;
                 }
                 $gap = '[^A-Za-z0-9]+';
@@ -1313,7 +1325,7 @@ class local_ousearch_search {
                 continue;
             }
 
-            // OK, obtain document as linear text
+            // OK, obtain document as linear text.
             list($contentwords, $contentpositions) =
                     local_ousearch_document::split_words(
                         $textcontent, false, true);
@@ -1323,10 +1335,10 @@ class local_ousearch_search {
 
             $allwords = array_merge($titlewords, $contentwords);
 
-            // Check it for phrases
+            // Check it for phrases.
             $positivewords = array();
             $ok = true;
-            $DNIfound = -1;
+            $dnifound = -1;
             foreach ($this->terms as $term) {
                 foreach ($term->words as $word) {
                     $positivewords[$word] = true;
@@ -1381,15 +1393,15 @@ class local_ousearch_search {
             // Result passes! Make structure holding it...
 
             // We now have list of all positive words, let's mark these
-            // in title and summary
+            // in title and summary.
             $result->title = self::internal_highlight_words(
                 $page->title, $titlewords, $titlepositions, $positivewords);
 
-            // Strip searchable-but-not-displayable content for summary
+            // Strip searchable-but-not-displayable content for summary.
             if (isset($evilmarker)) {
                 $strippedwords = array();
                 foreach ($contentwords as $word) {
-                    // Do not include extra strings in summary
+                    // Do not include extra strings in summary.
                     if ($word === 'xxrealcontentends' . $evilmarker) {
                         break;
                     }
@@ -1412,8 +1424,8 @@ class local_ousearch_search {
             $maxlength = 0;
             $run = true;
             foreach ($contentwords as $word) {
-                if (array_key_exists($pos-self::SUMMARY_LENGTH, $highlights)) {
-                    unset($highlights[$pos-self::SUMMARY_LENGTH]);
+                if (array_key_exists($pos - self::SUMMARY_LENGTH, $highlights)) {
+                    unset($highlights[$pos - self::SUMMARY_LENGTH]);
                     $currentscore--;
                 }
                 if (array_key_exists($word, $positivewords)) {
@@ -1441,7 +1453,7 @@ class local_ousearch_search {
                 $end = count($contentwords);
             }
 
-            // $contentpositions is in characters.
+            // The $contentpositions is in characters.
             $result->summary = core_text::substr($textcontent,
                     $contentpositions[$start],
                     $contentpositions[$end] - $contentpositions[$start]) .
@@ -1453,7 +1465,7 @@ class local_ousearch_search {
                 $result->summary, $contentwords, $contentpositions,
                 $positivewords, $offset, $start, $end);
 
-            if ($start!==0) {
+            if ($start !== 0) {
                 $result->summary = '...' . $result->summary;
             }
 
@@ -1466,7 +1478,7 @@ class local_ousearch_search {
                 $result->data = $page->data;
             }
 
-            // Do user-specified filter if set
+            // Do user-specified filter if set.
             if ($this->filter) {
                 $filter = $this->filter;
                 if (!$filter($result)) {
@@ -1492,7 +1504,7 @@ class local_ousearch_search {
             $end = count($contentwords);
         }
 
-        for($pos=$start; $pos<$end; $pos++) {
+        for ($pos = $start; $pos < $end; $pos++) {
             $word = $contentwords[$pos];
             if (array_key_exists($word, $positivewords)) {
                 $wordpos = $contentpositions[$pos];
@@ -1501,11 +1513,11 @@ class local_ousearch_search {
                             $summary, $wordpos + $offset, core_text::strlen($word)) .
                         '</highlight>' . core_text::substr(
                             $summary, $wordpos + $offset + core_text::strlen($word));
-                $offset += 23; // Length of highlight tags
+                $offset += 23; // Length of highlight tags.
             }
         }
         $summary = htmlspecialchars($summary);
-        $summary = preg_replace('@&lt;(/?highlight)&gt;@','<$1>', $summary);
+        $summary = preg_replace('@&lt;(/?highlight)&gt;@', '<$1>', $summary);
         return $summary;
     }
 
@@ -1549,7 +1561,7 @@ class local_ousearch_search {
             $year = false;
         }
 
-        // Translate words to IDs
+        // Translate words to IDs.
         list($ok, $problemword) = $this->internal_translate_words();
         if (!$ok) {
             $return->success = false;
@@ -1558,7 +1570,7 @@ class local_ousearch_search {
         }
 
         // Initially assume that 1 in 2 results will pass filters, if there
-        // are any terms that will require filters
+        // are any terms that will require filters.
         $filters = false;
         foreach ($this->terms as $term) {
             if (count($term->ids) > 1) {
@@ -1576,12 +1588,12 @@ class local_ousearch_search {
         }
         $sparsity = $filters ? 2 : 1;
 
-        // Obtain results
+        // Obtain results.
         $totalrequested = 0;
         $totalgot = 0;
         $results = array();
-        while(count($results) < $desired) {
-            // Request a number of results
+        while (count($results) < $desired) {
+            // Request a number of results.
             $left = $desired - count($results);
             $dbrequest = $left * $sparsity;
             if ($dbrequest > 1000) {
@@ -1592,16 +1604,16 @@ class local_ousearch_search {
             $results = array_merge($results, $filtered->results);
             $dbstart += $filtered->dbnext;
 
-            // If we're out of database results, stop now
+            // If we're out of database results, stop now.
             if (count($dbresults) < $dbrequest) {
                 $totalrequested += count($dbresults);
                 break;
             }
 
-            // We still have DB results. Update sparsity value if available
+            // We still have DB results. Update sparsity value if available.
             $totalrequested += $dbrequest;
             $totalgot += count($filtered->results);
-            if ($totalgot>0) {
+            if ($totalgot > 0) {
                 $sparsity = $totalrequested / $totalgot;
             } else {
                 $sparsity = 20; // Request loads!
@@ -1651,7 +1663,7 @@ class local_ousearch_search {
             } else if ($from > self::RESULTS_PER_PAGE &&
                 preg_match('/^(.*?),?([0-9]+)$/', $previous, $matches)) {
                 $linkprev = $linkshared . '&from=' .
-                        ($from-self::RESULTS_PER_PAGE) .
+                        ($from - self::RESULTS_PER_PAGE) .
                         '&dbstart=' . $matches[2] .
                         ($matches[1] ? '&previous=' . $matches[1] : '');
             }
@@ -1661,12 +1673,12 @@ class local_ousearch_search {
                 if ($from < self::RESULTS_PER_PAGE) {
                     $newprevious = '';
                 } else {
-                    $newprevious = ($previous !== '')
-                            ? '&previous=' . $previous . ',' : '&previous=';
+                    $newprevious = ($previous !== '') ?
+                            '&previous=' . $previous . ',' : '&previous=';
                     $newprevious .= required_param('dbstart', PARAM_INT);
                 }
                 $linknext =
-                        $linkshared . '&from=' . ($from+self::RESULTS_PER_PAGE) .
+                        $linkshared . '&from=' . ($from + self::RESULTS_PER_PAGE) .
                         '&dbstart=' . $results->dbstart . $newprevious;
             }
         }
@@ -1707,14 +1719,14 @@ class local_ousearch_search {
         }
 
         if (!$results->success) {
-            if ($results->problemword === null){
+            if ($results->problemword === null) {
                 $out .= '<p>' . get_string('nowordsinquery', 'local_ousearch') .
                         '</p>';
             } else {
                 $out .= '<p>' . get_string('resultsfail', 'local_ousearch',
                         $results->problemword) . '</p>';
             }
-        }  else {
+        } else {
             if ($prevlink) {
                 $out .= '<p>' . link_arrow_left(
                     get_string('previousresults', 'local_ousearch', $prevrange),
@@ -1728,11 +1740,9 @@ class local_ousearch_search {
             } else {
                 $out .= '<ul>';
                 foreach ($results->results as $result) {
-                    $title = $result->title === ''
-                            ? get_string('untitled','local_ousearch')
-                            : $result->title;
+                    $title = $result->title === '' ?
+                            get_string('untitled', 'local_ousearch') : $result->title;
                     $out .= '<li>';
-                            //<div class="ous_number">' . $number .'</div>//request to remove no.
                     $out .= '<h3><a href="' . $result->url . '">' .
                             str_replace('highlight>', 'strong>', $title) .
                             '</a></h3>' .
@@ -1786,10 +1796,10 @@ class local_ousearch_search {
      * @return boolean True if the search found some results, false if not
      *   (function works anyway)
      */
-    public static function output_remote_results($results,$first,$perpage) {
+    public static function output_remote_results($results, $first, $perpage) {
         global $CFG;
         header('Content-Type: text/xml; encoding=UTF-8');
-        if (!$results->success || count($results->results)==0) {
+        if (!$results->success || count($results->results) == 0) {
             print '<results total="0"></results>';
         } else {
             $total = count($results->results);
@@ -1797,11 +1807,11 @@ class local_ousearch_search {
             if ($count > $perpage) {
                 $count = $perpage;
             }
-            print '<results first="' . $first . '" last="' . ($first+$count-1) .
+            print '<results first="' . $first . '" last="' . ($first + $count - 1) .
                     '" total="' . $total . '">';
 
             foreach ($results->results as $result) {
-                // Skip first results
+                // Skip first results.
                 if ($first > 1) {
                     $first--;
                     continue;
@@ -1825,7 +1835,7 @@ class local_ousearch_search {
                         '%</score>';
                 print '<summary>' . $result->summary . '</summary>';
                 print '</result>';
-                // Only display $perpage results
+                // Only display $perpage results.
                 $perpage--;
                 if ($perpage == 0) {
                     break;
@@ -1848,7 +1858,7 @@ class local_ousearch_search {
         $year = year_tables::get_year_for_course(get_course($courseid));
         $docstable = year_tables::get_docs_table($year);
 
-        // Get all CMs that have a document
+        // Get all CMs that have a document.
         $possible = $DB->get_records_sql("
                 SELECT DISTINCT cm.id AS cmid, cm.course AS cmcourse, cm.groupmode AS cmgroupmode, x.*
                   FROM {" . $docstable . "} bod
@@ -1856,7 +1866,7 @@ class local_ousearch_search {
                   JOIN {context} x ON x.instanceid = cm.id AND x.contextlevel = " . CONTEXT_MODULE . "
                  WHERE bod.courseid = ?", array($courseid));
 
-        // Check accessallgroups on each one
+        // Check accessallgroups on each one.
         $results = array();
         foreach ($possible as $record) {
             if ($record->cmgroupmode == VISIBLEGROUPS ||
