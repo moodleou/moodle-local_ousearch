@@ -95,7 +95,7 @@ function xmldb_local_ousearch_upgrade($oldversion=0) {
         }
 
         // Ousearch savepoint reached.
-        upgrade_block_savepoint(true, 2015050100, 'ousearch');
+        upgrade_plugin_savepoint(true, 2015050100, 'local', 'ousearch');
     }
 
     return true;
