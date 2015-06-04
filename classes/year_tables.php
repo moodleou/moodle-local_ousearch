@@ -226,6 +226,19 @@ abstract class year_tables {
     }
 
     /**
+     * Calls mtrace if the output variable is turned on.
+     *
+     * @param bool $output True to call mtrace
+     * @param string $message Message
+     * @param bool $lf If true, adds LF after message
+     */
+    protected static function cron_log($output, $message, $lf = false) {
+        if ($output) {
+            mtrace($message, $lf ? "\n" : '');
+        }
+    }
+
+    /**
      * Does a chunk of work toward splitting the data into tables.
      *
      * @param bool $output If true, calls mtrace to display output
@@ -251,13 +264,13 @@ abstract class year_tables {
             // Do non-course stuff first.
             $where = 'courseid IS NULL';
             $course = null;
-            $out = '  [Non-course]';
+            self::cron_log($output, '  [Non-course]');
             $targetyear = self::NON_COURSE_YEAR;
         } else {
             $where = 'courseid = ?';
             $params[] = $transferringid;
             $course = get_course($transferringid);
-            $out = '  ' . $course->shortname;
+            self::cron_log($output, '  ' . $course->shortname);
             $targetyear = self::get_year_for_course($course);
         }
 
@@ -280,7 +293,7 @@ abstract class year_tables {
         $transaction = $DB->start_delegated_transaction();
         $rs = $DB->get_recordset_select('local_ousearch_documents', $where, $params,
                 'timemodified', '*');
-        $out .= ' Select: ' . round(microtime(true) - $before, 1) . 's.';
+        self::cron_log($output, ' Select: ' . round(microtime(true) - $before, 1) . 's.');
         $count = 0;
         $lasttime = 0;
         $complete = true;
@@ -326,8 +339,8 @@ abstract class year_tables {
         }
         $rs->close();
 
-        $out .= ' Copy: ' . $creates . ' creates, ' . $updates . ' updates, ' .
-                round(microtime(true) - $before, 1) . 's.';
+        self::cron_log($output, ' Copy: ' . $creates . ' creates, ' . $updates . ' updates, ' .
+                round(microtime(true) - $before, 1) . 's.');
 
         if ($complete) {
             // After completing a course, add it to the course years list.
@@ -350,10 +363,7 @@ abstract class year_tables {
                 unset_config(self::CONFIG_TRANSFERRING_DONEUPTO, 'local_ousearch');
                 set_config(self::CONFIG_TRANSFERRING_COURSE, $nextcourseid, 'local_ousearch');
                 $transaction->allow_commit();
-                $out .= ' Complete, moving to next course.';
-                if ($output) {
-                    mtrace($out);
-                }
+                self::cron_log($output, ' Complete, moving to next course.', true);
                 return false;
             } else {
                 // Finished all courses!
@@ -367,20 +377,16 @@ abstract class year_tables {
                 $before = microtime(true);
                 $DB->delete_records('local_ousearch_documents');
                 $DB->delete_records('local_ousearch_occurrences');
-                $out .= ' All courses complete, tables deleted: ' . round(microtime(true) - $before, 1) . 's.';
-                if ($output) {
-                    mtrace($out);
-                }
+                self::cron_log($output,
+                        ' All courses complete, tables deleted: ' . round(microtime(true) - $before, 1) . 's.',
+                        true);
                 return true;
             }
         } else {
             // If not complete, update the time processed up to.
             set_config(self::CONFIG_TRANSFERRING_DONEUPTO, $lasttime, 'local_ousearch');
             $transaction->allow_commit();
-            $out .= ' Continuing...';
-            if ($output) {
-                mtrace($out);
-            }
+            self::cron_log($output, ' Continuing...', true);
             return false;
         }
     }
