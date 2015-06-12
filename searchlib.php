@@ -1855,7 +1855,7 @@ class local_ousearch_search {
     public static function get_group_exceptions($courseid) {
         global $DB;
 
-        $year = year_tables::get_year_for_course(get_course($courseid));
+        $year = year_tables::get_year_for_tables(get_course($courseid));
         $docstable = year_tables::get_docs_table($year);
 
         // Get all CMs that have a document.
