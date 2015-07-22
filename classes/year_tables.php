@@ -148,6 +148,9 @@ abstract class year_tables {
             // IDs, it will be added later for sure.
             return;
         }
+        if ($DB->record_exists('local_ousearch_courseyears', array('courseid' => $courseid))) {
+            return;
+        }
 
         // OK, this is actually a new course, so record its year in the table.
         $course = get_course($courseid);
