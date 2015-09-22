@@ -63,7 +63,7 @@ class local_ousearch_document {
         if (!$year && year_tables::currently_transferring_course($cm->course)) {
             $newyear = year_tables::get_year_for_course($course);
             $occurstable = year_tables::get_occurs_table($newyear);
-            $docstable = year_tables::get_occurs_table($newyear);
+            $docstable = year_tables::get_docs_table($newyear);
             $DB->delete_records_select($occurstable,
                     'documentid IN (SELECT id FROM {' . $docstable . '} WHERE ' .
                     $where . ')', $wherearray);
