@@ -25,3 +25,4 @@
 $plugin->version = 2015050100;
 $plugin->requires = 2011120100;
 $plugin->outestssufficient = true;
+$plugin->component = 'local_ousearch';
