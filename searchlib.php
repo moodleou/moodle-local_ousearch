@@ -670,7 +670,7 @@ class local_ousearch_search {
     const NONE = 'none';
 
     public $courseid = 0, $plugin = '', $coursemoduleid = 0, $cmarray, $filter = null;
-    public $groupids = null, $allownogroup = true, $groupexceptions = null, $userid = 0,
+    public $groupids = null, $allownogroup = true, $groupexceptions = null, $userids = null,
             $allownouser = true;
     public $querytext;
 
@@ -942,8 +942,24 @@ class local_ousearch_search {
      *   (ignored if first parameter is local_ousearch_search::NONE or 0)
      */
     public function set_user_id($userid, $ornone = true) {
-        $this->userid = $userid;
+        $this->userids = array($userid);
         $this->allownouser = $ornone;
+    }
+
+    /**
+     * Restricts search to a particular set of users.
+     *
+     * @param mixed $userids Array of user IDs, or 0 for any user, or
+     *   local_ousearch_search::NONE to return only results that have no user
+     * @param bool $ornone If true, also returns results that have no user
+     *   (ignored if first parameter is local_ousearch_search::NONE or null)
+     */
+    public function set_user_ids($userids, $ornone = true) {
+        if (!is_array($userids)) {
+            $userids = array($userids);
+        }
+        $this->userids = $userids;
+        $this->allownogroup = $ornone;
     }
 
     /**
@@ -1036,12 +1052,13 @@ class local_ousearch_search {
                 }
             }
         }
-        if ($this->userid) {
-            if ($this->userid == self::NONE) {
+        if (is_array($this->userids) && !empty($this->userids)) {
+            if (reset($this->userids) == self::NONE) {
                 $where .= "\nAND d.userid IS NULL";
             } else {
-                $where .= "\nAND (d.userid = ?";
-                $wherearray[] = $this->userid;
+                list ($userwhere, $userwherearray) = $DB->get_in_or_equal($this->userids);
+                $where .= "\nAND (d.userid " . $userwhere;
+                $wherearray = array_merge($wherearray, $userwherearray);
                 if ($this->allownouser) {
                     $where .= ' OR d.userid IS NULL';
                 }

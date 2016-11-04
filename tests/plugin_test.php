@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Unit tests for ousearch using ForumNG.
+ * Unit tests for ousearch using plugins.
  *
  * @package local_ousearch
  * @copyright 2015 The Open University
@@ -30,7 +30,7 @@ require_once($CFG->dirroot . '/local/ousearch/searchlib.php');
 /**
  * Unit tests for ousearch using ForumNG as a real-life example module.
  */
-class local_ousearch_forumng_test extends advanced_testcase {
+class local_ousearch_plugin_test extends advanced_testcase {
     /**
      * Checks that ForumNG is installed in this Moodle instance, otherwise skip.
      */
@@ -132,29 +132,90 @@ class local_ousearch_forumng_test extends advanced_testcase {
     }
 
     /**
+     * Tests (multiple) user content specific searches as supported by oublog
+     */
+    public function test_user_specific_search() {
+        global $DB, $CFG;
+        require_once($CFG->dirroot . '/course/lib.php');
+
+        if (!file_exists($CFG->dirroot . '/mod/oublog')) {
+            $this->markTestSkipped('The real-life search test only works if oublog is installed.');
+        }
+
+        require_once($CFG->dirroot . '/mod/oublog/locallib.php');
+
+        $this->resetAfterTest();
+        $this->setAdminUser();
+
+        // Create a course for testing.
+        $generator = $this->getDataGenerator();
+        $course1 = $generator->create_course();
+        $student1 = $generator->create_user();
+        $student2 = $generator->create_user();
+        $studentroleid = $DB->get_field('role', 'id', array('shortname' => 'student'));
+        $generator->enrol_user($student1->id, $course1->id, $studentroleid);
+        $generator->enrol_user($student2->id, $course1->id, $studentroleid);
+
+        $indvidualblog = $generator->create_module('oublog', array('course' => $course1->id,
+                'individual' => OUBLOG_SEPARATE_INDIVIDUAL_BLOGS));
+        $bloggen = $generator->get_plugin_generator('mod_oublog');
+        $post = array(
+            'post' => (object) array (
+                'userid' => $student1->id,
+                'title' => 'Apple 1',
+                'message' => 'Apple 1',
+            )
+        );
+        $bloggen->create_content($indvidualblog, $post);
+        $post = array(
+            'post' => (object) array (
+                'userid' => $student2->id,
+                'title' => 'Apple 2',
+                'message' => 'Apple 2',
+            )
+        );
+        $bloggen->create_content($indvidualblog, $post);
+        $this->assertEquals(array('Apple 1'),
+                $this->coursewide_search($course1, 'Apple', 'oublog', array($student1->id)));
+        $this->assertEquals(array('Apple 1', 'Apple 2'),
+                $this->coursewide_search($course1, 'Apple', 'oublog',
+                array($student1->id, $student2->id)));
+        $this->assertEquals(array('Apple 1', 'Apple 2'),
+                $this->coursewide_search($course1, 'Apple', 'oublog', array()));
+        $this->assertEmpty($this->coursewide_search($course1, 'Apple', 'oublog',
+                array(local_ousearch_search::NONE)));
+    }
+
+    /**
      * Do a coursewide search as the current user on the given course, through
      * all forums.
      *
      * @param stdClass $course Moodle course object
      * @param string $search Search query
+     * @param string $plugin Mod to search against e.g. forumng
+     * @param array $userids Search against specified user ids only (Default is user + groups)
      * @return array Array of titles of results (empty array if none)
      */
-    protected function coursewide_search($course, $search) {
+    protected function coursewide_search($course, $search, $plugin = 'forumng', $userids = null) {
         global $USER;
 
         // Based on the code in blocks/resources_search/search.class.php.
         $query = new local_ousearch_search($search);
         $query->set_course_id($course->id);
-        $query->set_plugin('mod_forumng');
-        $query->set_visible_modules_in_course($course, 'forumng');
-        $groups = groups_get_all_groups($course->id, $USER->id);
-        $groupids = array();
-        foreach ($groups as $group) {
-            $groupids[] = $group->id;
+        $query->set_plugin("mod_$plugin");
+        $query->set_visible_modules_in_course($course, $plugin);
+        if (is_null($userids)) {
+            $groups = groups_get_all_groups($course->id, $USER->id);
+            $groupids = array();
+            foreach ($groups as $group) {
+                $groupids[] = $group->id;
+            }
+            $query->set_group_ids($groupids);
+            $query->set_group_exceptions($query->get_group_exceptions($course->id));
+            $query->set_user_id($USER->id);
+        } else {
+            $query->set_user_ids($userids);
         }
-        $query->set_group_ids($groupids);
-        $query->set_group_exceptions($query->get_group_exceptions($course->id));
-        $query->set_user_id($USER->id);
 
         $results = $query->query(0, 10);
         $out = array();
