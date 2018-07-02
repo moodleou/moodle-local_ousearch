@@ -65,3 +65,14 @@ $string['splittimelimit'] = 'Year table split time';
 $string['splittimelimit_desc'] = 'Max time to spend per hourly cron task in transferring the old search index into per-year tables';
 $string['datetimelimit'] = 'Year table change date time';
 $string['datetimelimit_desc'] = 'Max time to spend per hourly cron in transferring search index data if a website changes year';
+
+$string['privacy:metadata:local_ousearch_documents'] = 'Contains one entry for each known document (potential search result).';
+$string['privacy:metadata:local_ousearch_documents:intref1'] = 'Arbitrary int reference to identify document (null if not needed)';
+$string['privacy:metadata:local_ousearch_documents:intref2'] = 'Arbitrary int reference to identify document (null if not needed)';
+$string['privacy:metadata:local_ousearch_documents:plugin'] = 'Module or plug-in name e.g. mod/ouwiki, format/studycal';
+$string['privacy:metadata:local_ousearch_documents:stringref'] = 'Arbitrary string reference to identify document (null if not needed)';
+$string['privacy:metadata:local_ousearch_documents:timeexpires'] = 'Time (seconds since epoch) at which document should be checked for changes, or null for no checks';
+$string['privacy:metadata:local_ousearch_documents:timemodified'] = 'Time (seconds since epoch) at which document was modified';
+$string['privacy:metadata:local_ousearch_documents:userid'] = 'User this document belong to.';
+$string['privacy_somebodyelse'] = 'Somebody else';
+$string['privacy_you'] = 'You';
