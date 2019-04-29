@@ -232,6 +232,64 @@ class local_ousearch_privacy_testcase extends provider_testcase {
     }
 
     /**
+     * Test get users in context.
+     *
+     * @throws dml_exception
+     */
+    public function test_get_users_in_context() {
+        $component = 'local_ousearch';
+
+        $user = $this->getDataGenerator()->create_user();
+        $this->documents[3] = $this->create_search_document('page', $this->course->id, $this->contexts[0]->instanceid,
+            0, $user->id);
+
+        $userlist1 = new \core_privacy\local\request\userlist($this->contexts[0], $component);
+        $userlist2 = new \core_privacy\local\request\userlist($this->contexts[1], $component);
+
+        // Check users for first context.
+        provider::get_users_in_context($userlist1);
+        $userids = $userlist1->get_userids();
+        $this->assertCount(2, $userids);
+        $this->assertContains($this->user->id, $userids);
+        $this->assertContains($user->id, $userids);
+
+        // Check users for second context.
+        provider::get_users_in_context($userlist2);
+        $userids = $userlist2->get_userids();
+        $this->assertCount(1, $userids);
+        $this->assertContains($this->user->id, $userids);
+    }
+
+    /**
+     * Test delete users inside single context.
+     *
+     * @throws coding_exception
+     * @throws dml_exception
+     */
+    public function test_delete_data_for_users() {
+        global $DB;
+        $component = 'local_ousearch';
+
+        $user = $this->getDataGenerator()->create_user();
+        $this->documents[3] = $this->create_search_document('page', $this->course->id, $this->contexts[0]->instanceid,
+            0, $user->id, 2019);
+
+        $approveduserids = [$this->user->id, $user->id];
+        $approvedlist = new \core_privacy\local\request\approved_userlist($this->contexts[0], $component, $approveduserids);
+        // Check deletes data for first and third user in first booking system.
+        provider::delete_data_for_users($approvedlist);
+
+        // Check data belong to first context is deleted.
+        $this->assertEmpty($DB->get_records('local_ousearch_docs_2018'));
+        $this->assertEmpty($DB->get_records('local_ousearch_docs_2019'));
+        $this->assertEmpty($DB->get_records('local_ousearch_documents'));
+        $documents = array_values($DB->get_records('local_ousearch_docs_2017'));
+        $this->assertCount(1, $documents);
+        $this->assertEquals($this->user->id, $documents[0]->userid);
+        $this->assertEquals($this->documents[2]->id, $documents[0]->id);
+    }
+
+    /**
      * Create search document.
      *
      * @param string $plugin
