@@ -117,14 +117,10 @@ abstract class year_tables {
             // Any year before 2011 goes in the 2011 table.
             return self::MIN_YEAR;
         }
-        if ($year >= self::MAX_YEAR) {
-            if ($year > self::MAX_YEAR) {
-                // When the course is past the max table, throw an exception.
-                throw new \moodle_exception('error_futureyear', 'local_ousearch');
-            } else {
-                // On the last table, show a debugging message.
-                debugging(get_string('warning_lastyear', 'local_ousearch'));
-            }
+        if ($year > self::MAX_YEAR) {
+            // For anything beyond 2020, use the 2020 table. (We are phasing out this functionality
+            // so it will not matter for us - all remaining data will go in the 2020 table.)
+            $year = self::MAX_YEAR;
         }
         return $year;
     }
