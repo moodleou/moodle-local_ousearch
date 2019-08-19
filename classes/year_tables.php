@@ -67,9 +67,6 @@ abstract class year_tables {
      * If you specify null for the course we return the table used for searchable
      * data that isn't associated with a course.
      *
-     * Prints a debugging message if it's getting dangerously close to the last
-     * available year, and throws exception if it's after that.
-     *
      * @param stdClass $course Moodle course object containing at least id, startdate
      * @return int|bool Year number or false if none
      * @throws MoodleException If after the last supported year
