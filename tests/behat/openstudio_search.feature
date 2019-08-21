@@ -148,3 +148,24 @@ Feature: Search content
         And I should see "folder — 1 results found"
         And I should not see "Student content folder 1"
         And I should see "Student content folder 2"
+
+    Scenario: Search on a term that is not in the index
+        Given I log in as "student1"
+        And I am on "Course 1" course homepage
+        And I follow "Sharing Studio"
+        And I set the field "Search My Module" to "notthere"
+        When I submit the openstudio search form "#openstudio_searchquery" "css_element"
+        Then I should see "No results"
+
+    Scenario: Search for a comment
+        Given I log in as "student1"
+        And I am on "Course 1" course homepage
+        And I follow "Sharing Studio"
+        And I follow "Student content 3"
+        And I press "Add new comment"
+        And I set the field "Comment" to "Comment text"
+        And I press "Post comment"
+        And I follow "Shared Content"
+        And I set the field "Search My Module" to "comment"
+        When I submit the openstudio search form "#openstudio_searchquery" "css_element"
+        Then I should see "comment — 1 results found"
