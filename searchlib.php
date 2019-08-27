@@ -294,10 +294,6 @@ class local_ousearch_document {
     public function update($title, $content, $timemodified=null, $timeexpires=null,
             $extrastrings=null) {
         global $DB;
-        if (get_config('local_ousearch', 'ousearchindexingdisabled')) {
-            // Do nothing if the OU Search system is turned off.
-            return;
-        }
         $transaction = $DB->start_delegated_transaction();
         // Find document ID, creating document if needed.
         if (!$this->find()) {
@@ -622,10 +618,7 @@ class local_ousearch_document {
      */
     public function wipe_document($id) {
         global $DB;
-        if (get_config('local_ousearch', 'ousearchindexingdisabled')) {
-            // Do nothing if the OU Search system is turned off.
-            return false;
-        }
+
         // Delete existing document and occurrences.
         $DB->delete_records($this->get_occurrences_table(), array('documentid' => $id));
         $DB->delete_records($this->get_documents_table(), array('id' => $id));

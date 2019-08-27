@@ -1,9 +1,0 @@
-OU search: disabling search indexing
-====================================
-
-This functionality document describes the 'disabling indexing' feature, not
-the entire plugin.
-
-If used to disable indexing it will not stop existing search data from being used
-to provide search results, but no new documents will be indexed,
-so there will no search results for any new content available.

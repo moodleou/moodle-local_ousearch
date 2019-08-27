@@ -29,10 +29,6 @@ if ($hassiteconfig) {
             'local_ousearch', get_string('ousearch', 'local_ousearch'));
     $ADMIN->add('localplugins', $settings);
 
-    $settings->add(new admin_setting_configcheckbox(
-            'local_ousearch/ousearchindexingdisabled', get_string('ousearchindexingdisabled', 'local_ousearch'),
-            get_string('ousearchindexingdisabled_desc', 'local_ousearch'), '0'));
-
     $settings->add(new admin_setting_configtext(
             'local_ousearch/remote', get_string('remote', 'local_ousearch'),
             get_string('configremote', 'local_ousearch'), '', PARAM_RAW));

@@ -70,9 +70,18 @@ class local_ousearch_year_tables_test extends advanced_testcase {
         set_config(year_tables::CONFIG_ENABLED, year_tables::ENABLED_ON, 'local_ousearch');
         unset_config(year_tables::CONFIG_TRANSFERRING_COURSE, 'local_ousearch');
 
-        // All courses 2020 onwards should return 2020.
+        // 2020 should show a warning that we're running out of tables.
         $this->assertEquals(2020, year_tables::get_year_for_tables($course2));
-        $this->assertEquals(2020, year_tables::get_year_for_tables($course3));
+        $this->assertEquals(1, count(phpunit_util::get_debugging_messages()));
+        phpunit_util::reset_debugging();
+
+        // 2021 should throw exception.
+        try {
+            year_tables::get_year_for_tables($course3);
+            $this->fail();
+        } catch (moodle_exception $e) {
+            $this->assertContains('start date beyond that supported by the OU search system', $e->getMessage());
+        }
     }
 
     /**

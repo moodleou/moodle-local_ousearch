@@ -53,6 +53,7 @@ $string['maxterms_desc'] = 'If the user tries to search for more terms than this
 $string['postinstall'] = 'This page generates search indexes for all existing content. It can take a very long time (hours or days) if you have a large amount of searchable content to index.';
 
 $string['error_futureyear'] = 'Error: This website has a start date beyond that supported by the OU search system. Search data manipulation failed.';
+$string['warning_lastyear'] = 'Warning: This website has a start date in the last year supported by the OU search system. Administrators should increase the number of available years.';
 $string['task_split_tables'] = 'OU search: Split data into per-year tables';
 $string['task_change_dates'] = 'OU search: Handle websites that have changed their start date';
 $string['yearsenabled'] = 'Enable per-year tables';
@@ -75,7 +76,3 @@ $string['privacy:metadata:local_ousearch_documents:timemodified'] = 'Time (secon
 $string['privacy:metadata:local_ousearch_documents:userid'] = 'User this document belong to.';
 $string['privacy_somebodyelse'] = 'Somebody else';
 $string['privacy_you'] = 'You';
-
-$string['ousearchindexingdisabled'] = 'OU search indexing disabled';
-$string['ousearchindexingdisabled_desc'] = 'This setting will turn off search indexing for documents, while using the \'OUsearch\'
-system, across all modules where it is supported.';
