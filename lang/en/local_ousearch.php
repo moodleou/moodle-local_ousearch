@@ -76,3 +76,7 @@ $string['privacy:metadata:local_ousearch_documents:timemodified'] = 'Time (secon
 $string['privacy:metadata:local_ousearch_documents:userid'] = 'User this document belong to.';
 $string['privacy_somebodyelse'] = 'Somebody else';
 $string['privacy_you'] = 'You';
+
+$string['ousearchindexingdisabled'] = 'OU search indexing disabled';
+$string['ousearchindexingdisabled_desc'] = 'This setting will turn off search indexing for documents, while using the \'OUsearch\'
+system, across all modules where it is supported.';

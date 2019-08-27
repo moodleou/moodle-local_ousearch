@@ -27,9 +27,11 @@ namespace local_ousearch\privacy;
 use context;
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\approved_contextlist;
+use core_privacy\local\request\approved_userlist;
 use core_privacy\local\request\contextlist;
 use core_privacy\local\request\helper;
 use core_privacy\local\request\transform;
+use core_privacy\local\request\userlist;
 use core_privacy\local\request\writer;
 
 defined('MOODLE_INTERNAL') || die();
@@ -43,7 +45,8 @@ defined('MOODLE_INTERNAL') || die();
  */
 class provider implements
         \core_privacy\local\metadata\provider,
-        \core_privacy\local\request\plugin\provider {
+        \core_privacy\local\request\plugin\provider,
+        \core_privacy\local\request\core_userlist_provider {
 
     /**
      * Returns meta data about this system.
@@ -344,6 +347,66 @@ class provider implements
         self::change_document_owner_to_admin($userid, $cmids, 'local_ousearch_docs_2020');
     }
 
+
+    /**
+     * Get the list of users who have data within a context.
+     *
+     * @param userlist $userlist The userlist containing the list of users who have data in this context/plugin combination.
+     */
+    public static function get_users_in_context(userlist $userlist) {
+        $context = $userlist->get_context();
+        if (!$context instanceof \context_module) {
+            return;
+        }
+
+        $sql = "SELECT doc.userid
+                  FROM (SELECT * FROM {local_ousearch_documents} UNION
+                        SELECT * FROM {local_ousearch_docs_2011} UNION
+                        SELECT * FROM {local_ousearch_docs_2012} UNION
+                        SELECT * FROM {local_ousearch_docs_2013} UNION
+                        SELECT * FROM {local_ousearch_docs_2014} UNION
+                        SELECT * FROM {local_ousearch_docs_2015} UNION
+                        SELECT * FROM {local_ousearch_docs_2016} UNION
+                        SELECT * FROM {local_ousearch_docs_2017} UNION
+                        SELECT * FROM {local_ousearch_docs_2018} UNION
+                        SELECT * FROM {local_ousearch_docs_2019} UNION
+                        SELECT * FROM {local_ousearch_docs_2020}) doc
+                  WHERE doc.userid IS NOT NULL
+                        AND doc.coursemoduleid = :cmid";
+
+        $params = ['cmid' => $context->instanceid];
+        $userlist->add_from_sql('userid', $sql, $params);
+    }
+
+    /**
+     * Delete multiple users within a single context.
+     *
+     * @param approved_userlist $userlist The approved context and user information to delete information for.
+     * @throws \dml_exception
+     * @throws \coding_exception
+     */
+    public static function delete_data_for_users(approved_userlist $userlist) {
+        $context = $userlist->get_context();
+
+        if (!$context instanceof \context_module) {
+            return;
+        }
+
+        $userids = $userlist->get_userids();
+        $cmid = $context->instanceid;
+        self::delete_document_for_users($cmid, 'local_ousearch_documents', $userids);
+        self::delete_document_for_users($cmid, 'local_ousearch_docs_2011', $userids);
+        self::delete_document_for_users($cmid, 'local_ousearch_docs_2012', $userids);
+        self::delete_document_for_users($cmid, 'local_ousearch_docs_2013', $userids);
+        self::delete_document_for_users($cmid, 'local_ousearch_docs_2014', $userids);
+        self::delete_document_for_users($cmid, 'local_ousearch_docs_2015', $userids);
+        self::delete_document_for_users($cmid, 'local_ousearch_docs_2016', $userids);
+        self::delete_document_for_users($cmid, 'local_ousearch_docs_2017', $userids);
+        self::delete_document_for_users($cmid, 'local_ousearch_docs_2018', $userids);
+        self::delete_document_for_users($cmid, 'local_ousearch_docs_2019', $userids);
+        self::delete_document_for_users($cmid, 'local_ousearch_docs_2020', $userids);
+    }
+
     /**
      * Delete document belong to user of course module id.
      *
@@ -363,6 +426,26 @@ class provider implements
         ];
 
         $DB->execute($sql, $params);
+    }
+
+    /**
+     * Delete document belong to users of course module id.
+     *
+     * @param int $coursemoduleid
+     * @param string $tablename
+     * @param array $userids
+     * @throws \coding_exception
+     * @throws \dml_exception
+     */
+    protected static function delete_document_for_users(int $coursemoduleid, string $tablename, array $userids = []) {
+        global $DB;
+
+        if (!empty($userids)) {
+            list ($userinsql, $userinparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+            $sql = "userid IS NOT NULL AND coursemoduleid = :cmid AND userid {$userinsql}";
+            $params = array_merge(['cmid' => $coursemoduleid], $userinparams);
+            $DB->delete_records_select($tablename, $sql, $params);
+        }
     }
 
     /**
