@@ -1,8 +1,8 @@
 @ou @ou_vle @local @local_ousearch @javascript
 Feature: Search content
-  In order to search content
-  As a student
-  I need to be able to search within OpenStudio
+    In order to search content
+    As a student
+    I need to be able to search within OpenStudio
 
     Background: Setup course and studio
         Given the following "users" exist:
@@ -169,3 +169,47 @@ Feature: Search content
         And I set the field "Search My Module" to "comment"
         When I submit the openstudio search form "#openstudio_searchquery" "css_element"
         Then I should see "comment — 1 results found"
+
+    Scenario: Search for a tag
+        Given I log in as "student1"
+        And I am on "Course 1" course homepage
+        And I follow "Sharing Studio"
+        And I follow "Student content 3"
+        And I press "Edit"
+        And I press "Add file"
+        And I set the field with xpath "//input[@placeholder='Enter tags...']" to "tag1"
+        And I press "Save"
+        When I follow "tag1"
+        Then I should see "tag:tag1 — 1 results found"
+        And I log out
+
+        # Enable folders
+        And I log in as "admin"
+        And I am on "Course 1" course homepage
+        And I follow "Sharing Studio"
+        And I follow "Administration > Edit" in the openstudio navigation
+        And I follow "Expand all"
+        And I set the field "Enable Folders" to "1"
+        And I press "Save and display"
+        And I should see "Create new folder"
+        And I log out
+
+        And I log in as "student1"
+        And I am on "Course 1" course homepage
+        And I follow "Sharing Studio"
+        And I follow "Create new folder"
+        And I set the following fields to these values:
+          | Who can view this folder  | My module                                  |
+          | Folder title              | Test my folder view 1                      |
+          | Folder description        | My folder view description 1               |
+        And I press "Create folder"
+        And I follow "Add new content"
+        And I press "Add file"
+        And I set the following fields to these values:
+          | Title                     | Test My Group Board View 2                 |
+          | Description               | My Group Board View Description 2          |
+          | Files                     | mod/openstudio/tests/importfiles/test1.jpg |
+          | Tags                      | tag2                                       |
+        And I press "Save"
+        When I follow "tag2"
+        Then I should see "tag:tag2 — 1 results found"
