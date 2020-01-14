@@ -54,6 +54,7 @@ Feature: Search content
         And Open Studio levels are configured for "Sharing Studio"
         And all users have accepted the plagarism statement for "OS1" openstudio
 
+    @_file_upload
     Scenario: Search my content
         Given I log in as "student1"
 
