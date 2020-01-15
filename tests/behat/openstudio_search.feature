@@ -171,6 +171,7 @@ Feature: Search content
         When I submit the openstudio search form "#openstudio_searchquery" "css_element"
         Then I should see "comment — 1 results found"
 
+    @_file_upload
     Scenario: Search for a tag
         Given I log in as "student1"
         And I am on "Course 1" course homepage
