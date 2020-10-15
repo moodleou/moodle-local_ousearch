@@ -191,7 +191,7 @@ Feature: Search content
         And I follow "Sharing Studio"
         And I follow "Administration > Edit" in the openstudio navigation
         And I follow "Expand all"
-        And I set the field "Enable Folders" to "1"
+        And I set the field "Enable folders" to "1"
         And I press "Save and display"
         And I should see "Create new folder"
         And I log out
