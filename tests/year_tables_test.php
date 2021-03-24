@@ -134,7 +134,7 @@ class local_ousearch_year_tables_test extends advanced_testcase {
             year_tables::handle_updated_course($course1->id);
             $this->fail();
         } catch (moodle_exception $e) {
-            $this->assertContains('table local_ousearch_courseyears', $e->getMessage());
+            $this->assertStringContainsString('table local_ousearch_courseyears', $e->getMessage());
         }
 
         // Initialise both courses.
@@ -246,7 +246,7 @@ class local_ousearch_year_tables_test extends advanced_testcase {
             year_tables::split_tables_chunk(false);
             $this->fail();
         } catch (coding_exception $e) {
-            $this->assertContains('except during transfer', $e->getMessage());
+            $this->assertStringContainsString('except during transfer', $e->getMessage());
         }
     }
 
