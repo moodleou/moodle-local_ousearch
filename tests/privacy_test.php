@@ -14,15 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-/**
- * Data provider tests for booking system module.
- *
- * @package    local_ousearch
- * @copyright  2018 The Open University
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
-defined('MOODLE_INTERNAL') || die();
+namespace local_ousearch;
 
 use local_ousearch\privacy\provider;
 use core_privacy\local\request\transform;
@@ -37,14 +29,14 @@ use core_privacy\local\request\writer;
  * @copyright  2018 The Open University
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class local_ousearch_privacy_testcase extends provider_testcase {
+class privacy_test extends provider_testcase {
     /**
-     * @var stdClass
+     * @var \stdClass
      */
     protected $course;
 
     /**
-     * @var stdClass
+     * @var \stdClass
      */
     protected $user;
 
@@ -66,8 +58,8 @@ class local_ousearch_privacy_testcase extends provider_testcase {
     /**
      * Set up data required for the test case.
      *
-     * @throws dml_exception
-     * @throws moodle_exception
+     * @throws \dml_exception
+     * @throws \moodle_exception
      */
     public function setUp(): void {
         $this->resetAfterTest();
@@ -81,8 +73,8 @@ class local_ousearch_privacy_testcase extends provider_testcase {
                 ['course' => $this->course->id], ['section' => 1]);
 
         $this->contexts = [
-                context_module::instance($page1->cmid),
-                context_module::instance($page2->cmid),
+                \context_module::instance($page1->cmid),
+                \context_module::instance($page2->cmid),
         ];
 
         $this->documents = [
@@ -97,14 +89,14 @@ class local_ousearch_privacy_testcase extends provider_testcase {
     /**
      * Test get context list for user id.
      *
-     * @throws dml_exception
+     * @throws \dml_exception
      */
     public function test_get_contexts_for_userid() {
         $contextids = provider::get_contexts_for_userid($this->user->id)->get_contextids();
 
         $this->assertCount(2, $contextids);
-        $this->assertContains($this->contexts[0]->id, $contextids);
-        $this->assertContains($this->contexts[1]->id, $contextids);
+        $this->assertTrue(in_array($this->contexts[0]->id, $contextids));
+        $this->assertTrue(in_array($this->contexts[1]->id, $contextids));
 
         // Test get data for new user.
         $user2 = $this->getDataGenerator()->create_user();
@@ -114,14 +106,14 @@ class local_ousearch_privacy_testcase extends provider_testcase {
         $this->create_search_document('page', $this->course->id, $this->contexts[0]->instanceid, 0, $user2->id, 2019);
         $contextids = provider::get_contexts_for_userid($user2->id)->get_contextids();
         $this->assertCount(1, $contextids);
-        $this->assertContains($this->contexts[0]->id, $contextids);
+        $this->assertTrue(in_array($this->contexts[0]->id, $contextids));
     }
 
     /**
      * Test export data for user.
      *
-     * @throws coding_exception
-     * @throws dml_exception
+     * @throws \coding_exception
+     * @throws \dml_exception
      */
     public function test_export_user_data() {
         $contextids = [$this->contexts[0]->id, $this->contexts[1]->id];
@@ -174,7 +166,7 @@ class local_ousearch_privacy_testcase extends provider_testcase {
     /**
      * Test delete data for all user in the context.
      *
-     * @throws dml_exception
+     * @throws \dml_exception
      */
     public function test_delete_data_for_all_users_in_context() {
         global $DB;
@@ -202,8 +194,8 @@ class local_ousearch_privacy_testcase extends provider_testcase {
     /**
      * Test delete data for users in context.
      *
-     * @throws coding_exception
-     * @throws dml_exception
+     * @throws \coding_exception
+     * @throws \dml_exception
      */
     public function test_delete_data_for_user_context() {
         global $DB;
@@ -234,7 +226,7 @@ class local_ousearch_privacy_testcase extends provider_testcase {
     /**
      * Test get users in context.
      *
-     * @throws dml_exception
+     * @throws \dml_exception
      */
     public function test_get_users_in_context() {
         $component = 'local_ousearch';
@@ -250,21 +242,21 @@ class local_ousearch_privacy_testcase extends provider_testcase {
         provider::get_users_in_context($userlist1);
         $userids = $userlist1->get_userids();
         $this->assertCount(2, $userids);
-        $this->assertContains($this->user->id, $userids);
-        $this->assertContains($user->id, $userids);
+        $this->assertTrue(in_array($this->user->id, $userids));
+        $this->assertTrue(in_array($user->id, $userids));
 
         // Check users for second context.
         provider::get_users_in_context($userlist2);
         $userids = $userlist2->get_userids();
         $this->assertCount(1, $userids);
-        $this->assertContains($this->user->id, $userids);
+        $this->assertTrue(in_array($this->user->id, $userids));
     }
 
     /**
      * Test delete users inside single context.
      *
-     * @throws coding_exception
-     * @throws dml_exception
+     * @throws \coding_exception
+     * @throws \dml_exception
      */
     public function test_delete_data_for_users() {
         global $DB;
@@ -299,7 +291,7 @@ class local_ousearch_privacy_testcase extends provider_testcase {
      * @param int $userid
      * @param string|null $year
      * @return bool|object
-     * @throws dml_exception
+     * @throws \dml_exception
      */
     protected function create_search_document(string $plugin, int $courseid, int $coursemoduleid, int $groupid, $userid,
             string $year = null) {
