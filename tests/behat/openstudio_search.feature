@@ -1,5 +1,5 @@
 @ou @ou_vle @local @local_ousearch @javascript
-Feature: Search content
+Feature: Search OpenStudio content
     In order to search content
     As a student
     I need to be able to search within OpenStudio
@@ -201,7 +201,7 @@ Feature: Search content
         And I follow "Sharing Studio"
         And I follow "Create new folder"
         And I set the following fields to these values:
-          | Who can view this folder  | My module                                  |
+          | My Module                 | 1                                          |
           | Folder title              | Test my folder view 1                      |
           | Folder description        | My folder view description 1               |
         And I press "Create folder"
