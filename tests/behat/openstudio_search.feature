@@ -189,7 +189,7 @@ Feature: Search OpenStudio content
         And I log in as "admin"
         And I am on "Course 1" course homepage
         And I follow "Sharing Studio"
-        And I navigate to "Edit settings" in current page administration
+        And I navigate to "Settings" in current page administration
         And I follow "Expand all"
         And I set the field "Enable folders" to "1"
         And I press "Save and display"
