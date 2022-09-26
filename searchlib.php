@@ -294,7 +294,7 @@ class local_ousearch_document {
     public function update($title, $content, $timemodified=null, $timeexpires=null,
             $extrastrings=null) {
         global $DB;
-        if (get_config('local_ousearch', 'ousearchindexingdisabled')) {
+        if (local_ousearch_indexingdisabled()) {
             // Do nothing if the OU Search system is turned off.
             return;
         }
@@ -622,7 +622,7 @@ class local_ousearch_document {
      */
     public function wipe_document($id) {
         global $DB;
-        if (get_config('local_ousearch', 'ousearchindexingdisabled')) {
+        if (local_ousearch_indexingdisabled()) {
             // Do nothing if the OU Search system is turned off.
             return false;
         }
@@ -1901,4 +1901,9 @@ class local_ousearch_search {
         }
         return $results;
     }
+}
+
+/** @return True if OU search indexing is disabled */
+function local_ousearch_indexingdisabled() {
+    return get_config('local_ousearch', 'ousearchindexingdisabled');
 }
