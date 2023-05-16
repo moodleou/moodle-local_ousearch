@@ -1206,7 +1206,7 @@ class local_ousearch_search {
             if (!$referer) {
                 $referer = ''; // Use default.
             }
-            print_error('toomanyterms', 'local_ousearch', $referer, $maxterms);
+            throw new moodle_exception('toomanyterms', 'local_ousearch', $referer, $maxterms);
         }
         foreach ($this->negativeterms as $term) {
             if (count($term->ids) == 1) {
