@@ -516,7 +516,7 @@ class local_ousearch_document {
      */
     public static function split_words($text, $query=false, $positions=false) {
         // Treat single right quote as apostrophe.
-        $text = str_replace("\xe2\x80\x99", "'", $text);
+        $text = str_replace("\xe2\x80\x99", "'", $text ?? '');
 
         // Words include all letters, numbers, and apostrophes. Though this is
         // expressed with Unicode it is likely to work properly only for English and
