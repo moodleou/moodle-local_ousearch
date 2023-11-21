@@ -38,6 +38,8 @@ class local_ousearch_document {
      */
     const MAX_WORD_LENGTH = 32;
 
+    public $id, $plugin, $coursemoduleid, $courseid, $timemodified, $timeexpires, $groupid, $userid, $stringref, $intref1, $intref2;
+
     /**
      * Static function. Deletes all data relating to a module instance.
      * @param object $cm Course-module object (must have at least ->id and ->course)
