@@ -212,6 +212,7 @@ Feature: Search OpenStudio content
           | Description               | My Group Board View Description 2          |
           | Files                     | mod/openstudio/tests/importfiles/test1.jpg |
           | Tags                      | tag2                                       |
+          | id_enteralt               | This is image alt                          |
         And I press "Save"
         When I follow "tag2"
         Then I should see "tag:tag2 — 1 results found"
